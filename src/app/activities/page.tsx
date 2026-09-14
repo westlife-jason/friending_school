@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ActivitySection from "@/components/landing/ActivitySection";
+import MomentsSection from "@/components/landing/MomentsSection";
 import { ACTIVITIES_HERO } from "@/data/activities-page";
 
 export const metadata: Metadata = { title: "액티비티 — 프렌딩 스쿨" };
@@ -28,6 +29,9 @@ export default function ActivitiesPage() {
 
       {/* 액티비티 카드 — /school 5번 섹션과 동일 컴포넌트 */}
       <ActivitySection />
+
+      {/* 아웃팅 모먼츠 — 지난 특강·모임 아카이브(4탭 리뉴얼 2단계 신규) */}
+      <MomentsSection />
     </div>
   );
 }
