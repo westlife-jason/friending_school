@@ -9,7 +9,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/utils/supabase/server";
-import { getUserRole, isFrienderRole } from "@/lib/auth";
+import { getUserRole, isFrienderRole, isFrienderPlusRole } from "@/lib/auth";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -37,13 +37,9 @@ export default async function RootLayout({
   const role = user ? await getUserRole(supabase, user.id) : null;
   const admin = role === "admin";
   const teacher = role === "teacher";
-  const friender = isFrienderRole(role); // 일반 프렌더·프렌더 Plus 모두 /friender 링크 노출
-  // 센터 매니저 여부 — centers.manager_id에 본인이 지정됐는지(공개 select라 세션 클라로 조회 가능).
-  let centerManager = false;
-  if (user) {
-    const { count } = await supabase.from("centers").select("id", { count: "exact", head: true }).eq("manager_id", user.id);
-    centerManager = (count ?? 0) > 0;
-  }
+  // Navbar 라벨 분기용 — "프렌더"/"프렌더 pro"를 서로 배타적으로 노출(둘 다 role 단일값이라 겹치지 않게 분리).
+  const frienderPlus = isFrienderPlusRole(role);
+  const friender = isFrienderRole(role) && !frienderPlus;
 
   return (
     <html lang="ko" data-scroll-behavior="smooth" className={cn("font-sans", geist.variable)}>
@@ -53,7 +49,7 @@ export default async function RootLayout({
           isAdmin={admin}
           isTeacher={teacher}
           isFriender={friender}
-          isCenterManager={centerManager}
+          isFrienderPlus={frienderPlus}
         />
         <AuthHashHandler />
         {children}

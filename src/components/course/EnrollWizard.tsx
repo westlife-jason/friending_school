@@ -98,7 +98,7 @@ export default function EnrollWizard({
             신청 내역 보기
           </Link>
           <Link
-            href="/philippines-english"
+            href="/learning"
             className="border-rule text-ink hover:bg-surface rounded-full border bg-white px-5 py-2.5 text-sm font-bold transition-colors">
             다른 과정 보기
           </Link>

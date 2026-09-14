@@ -25,13 +25,13 @@ export default function Navbar({
   isAdmin = false,
   isTeacher = false,
   isFriender = false,
-  isCenterManager = false,
+  isFrienderPlus = false,
 }: {
   user: NavbarUser;
   isAdmin?: boolean;
   isTeacher?: boolean;
   isFriender?: boolean;
-  isCenterManager?: boolean;
+  isFrienderPlus?: boolean;
 }) {
   const [user, setUser] = useState<NavbarUser>(initialUser);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -114,31 +114,29 @@ export default function Navbar({
           </Link>
         </div>
 
-        {/* 중앙 링크(Home·필리핀 화상영어·액티비티는 상시, 스쿨 소개는 admin만) — 우측은 인증/역할 링크 전용이라 중앙에 배치 */}
+        {/* 중앙 링크 4종(프렌딩/샤우팅/러닝/아웃팅, 로그인 무관 상시 노출) — 우측은 인증/역할 링크 전용이라 중앙에 배치.
+            스쿨 소개(/school)는 nav에서 완전히 제외(라우트 자체의 admin 가드는 유지 — 직접 URL 접근만 가능). */}
         <div className="hidden items-center justify-center gap-4 md:flex lg:gap-6">
           <Link
             href="/"
             className="text-ink-soft hover:text-accent-blue-ink focus-visible:ring-accent-blue/50 rounded text-sm font-bold whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
-            Home
+            프렌딩
           </Link>
           <Link
-            href="/philippines-english"
+            href="/shouting"
             className="text-ink-soft hover:text-accent-blue-ink focus-visible:ring-accent-blue/50 rounded text-sm font-bold whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
-            필리핀 화상영어
+            샤우팅
+          </Link>
+          <Link
+            href="/learning"
+            className="text-ink-soft hover:text-accent-blue-ink focus-visible:ring-accent-blue/50 rounded text-sm font-bold whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
+            러닝
           </Link>
           <Link
             href="/activities"
             className="text-ink-soft hover:text-accent-blue-ink focus-visible:ring-accent-blue/50 rounded text-sm font-bold whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
-            액티비티
+            아웃팅
           </Link>
-          {/* 스쿨 소개는 admin 전용 노출(일반 사용자는 Home·필리핀·액티비티 3탭만) */}
-          {isAdmin && (
-            <Link
-              href="/school"
-              className="text-ink-soft hover:text-accent-blue-ink focus-visible:ring-accent-blue/50 rounded text-sm font-bold whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
-              스쿨 소개
-            </Link>
-          )}
         </div>
 
         <div className="flex flex-1 items-center justify-end gap-3">
@@ -167,14 +165,14 @@ export default function Navbar({
                     프렌더
                   </Link>
                 )}
-                {isCenterManager && (
+                {isFrienderPlus && (
                   <Link
-                    href="/center"
+                    href="/friender"
                     className="text-cta hover:text-cta/80 focus-visible:ring-accent-blue/50 rounded text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
-                    Center Management
+                    프렌더 pro
                   </Link>
                 )}
-                {!isTeacher && !isCenterManager && (
+                {!isTeacher && (
                   <Link
                     href="/mypage"
                     className="text-ink-soft hover:text-accent-blue-ink focus-visible:ring-accent-blue/50 rounded text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
@@ -247,21 +245,30 @@ export default function Navbar({
           ✕
         </button>
         <ul className="list-none px-6">
-          {/* 상단 flat 링크 — 데스크톱 중앙 링크와 순서·노출 조건 동일(Home→필리핀→액티비티→스쿨 소개(admin만)). 아코디언 아님 → 별도 state 없음 */}
+          {/* 상단 flat 링크 — 데스크톱 중앙 링크와 순서·노출 조건 동일(프렌딩→샤우팅→러닝→아웃팅).
+              스쿨 소개는 nav에서 완전히 제외(라우트 자체는 유지). 아코디언 아님 → 별도 state 없음 */}
           <li className="border-rule border-b py-4">
             <Link
               href="/"
               onClick={closeMenu}
               className="text-ink-soft hover:text-accent-blue-ink focus-visible:ring-accent-blue/50 rounded text-[15px] font-bold no-underline transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
-              Home
+              프렌딩
             </Link>
           </li>
           <li className="border-rule border-b py-4">
             <Link
-              href="/philippines-english"
+              href="/shouting"
               onClick={closeMenu}
               className="text-ink-soft hover:text-accent-blue-ink focus-visible:ring-accent-blue/50 rounded text-[15px] font-bold no-underline transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
-              필리핀 화상영어
+              샤우팅
+            </Link>
+          </li>
+          <li className="border-rule border-b py-4">
+            <Link
+              href="/learning"
+              onClick={closeMenu}
+              className="text-ink-soft hover:text-accent-blue-ink focus-visible:ring-accent-blue/50 rounded text-[15px] font-bold no-underline transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
+              러닝
             </Link>
           </li>
           <li className="border-rule border-b py-4">
@@ -269,20 +276,9 @@ export default function Navbar({
               href="/activities"
               onClick={closeMenu}
               className="text-ink-soft hover:text-accent-blue-ink focus-visible:ring-accent-blue/50 rounded text-[15px] font-bold no-underline transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
-              액티비티
+              아웃팅
             </Link>
           </li>
-          {/* 스쿨 소개는 admin 전용 노출 — 데스크톱 중앙 링크와 동일 조건 */}
-          {isAdmin && (
-            <li className="border-rule border-b py-4">
-              <Link
-                href="/school"
-                onClick={closeMenu}
-                className="text-ink-soft hover:text-accent-blue-ink focus-visible:ring-accent-blue/50 rounded text-[15px] font-bold no-underline transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
-                스쿨 소개
-              </Link>
-            </li>
-          )}
           {/* 커리큘럼 아코디언 */}
           <li className="border-rule border-b py-4">
             <button
@@ -380,17 +376,17 @@ export default function Navbar({
                   </Link>
                 </li>
               )}
-              {isCenterManager && (
+              {isFrienderPlus && (
                 <li className="border-rule border-b py-4">
                   <Link
-                    href="/center"
+                    href="/friender"
                     onClick={closeMenu}
                     className="text-cta focus-visible:ring-accent-blue/50 rounded text-[15px] font-semibold no-underline transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
-                    Center Management
+                    프렌더 pro
                   </Link>
                 </li>
               )}
-              {!isTeacher && !isCenterManager && (
+              {!isTeacher && (
                 <li className="border-rule border-b py-4">
                   <Link
                     href="/mypage"

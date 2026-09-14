@@ -11,11 +11,11 @@ import { createClient } from "@/utils/supabase/server";
 import { isAdmin } from "@/lib/auth";
 import { VIDEOS, getYoutubeId, type Video } from "@/data/landing";
 
-// ⚠️ admin 전용 페이지(네비 탭도 isAdmin일 때만 노출) — 색인 금지.
+// ⚠️ admin 전용 페이지(4탭 개편 이후 nav에서 완전히 제외 — 직접 URL 접근만 가능) — 색인 금지.
 export const metadata: Metadata = { title: "프렌딩 스쿨 소개 — 청년을 세계로", robots: { index: false } };
 
 export default async function SchoolPage() {
-  // admin 가드(`/admin` 레이아웃과 동일 패턴). 학생 동선의 "과정 보기"는 /philippines-english가 담당한다.
+  // admin 가드(`/admin` 레이아웃과 동일 패턴). 학생 동선의 "과정 보기"는 /learning이 담당한다.
   const supabase = createClient(await cookies());
   const {
     data: { user },
@@ -121,7 +121,7 @@ export default async function SchoolPage() {
         </div>
       </section>
 
-      {/* 4. 실전 스피킹 디벨롭 (과정 카드) — /philippines-english와 공유 컴포넌트 */}
+      {/* 4. 실전 스피킹 디벨롭 (과정 카드) — SpeakingDevelopSection 공유 컴포넌트 */}
       <SpeakingDevelopSection id="courses" />
 
       {/* 5. 액티비티 — /activities와 공유 컴포넌트 */}
