@@ -22,15 +22,19 @@ async function currentUserId(): Promise<string | null> {
 // join_friender_room RPC 반환 코드 → 사용자 메시지.
 const JOIN_ERROR: Record<string, string> = {
   unauthenticated: "로그인이 필요합니다. 다시 로그인해 주세요.",
-  not_found: "방을 찾을 수 없어요. 목록을 새로고침해 주세요.",
+  not_found: "회차를 찾을 수 없어요. 목록을 새로고침해 주세요.",
   own_room: "내가 개설한 방에는 예약할 수 없어요.",
-  ended: "이미 종료된 방이에요.",
+  ended: "이미 종료된 회차예요.",
   full: "정원이 모두 찼어요.",
   shouting_required: "이 방은 연결된 샤우팅 강좌를 수강확정한 학생만 입장할 수 있어요.",
 };
 
-export async function joinRoom(roomId: string): Promise<JoinResult> {
-  const id = String(roomId ?? "").trim();
+// ⚠️ 4탭 리뉴얼 4단계(반복모임)부터 이 파일의 모든 함수는 "방(room)"이 아니라
+//    "회차(occurrence, friender_room_occurrences.id)"를 단위로 동작한다. 1회성 방은 회차가
+//    하나뿐이라 체감 동작은 이전과 동일하고, 반복방은 회차마다 별도로 예약·입장·후기가 갈린다.
+
+export async function joinRoom(occurrenceId: string): Promise<JoinResult> {
+  const id = String(occurrenceId ?? "").trim();
   if (!id) return { ok: false, error: "잘못된 요청입니다." };
 
   const supabase = createClient(await cookies());
@@ -46,7 +50,7 @@ export async function joinRoom(roomId: string): Promise<JoinResult> {
   const userName = p.nickname?.trim() || `${p.last_name ?? ""}${p.first_name ?? ""}` || user.email?.split("@")[0] || null;
 
   // ⚠️ 본인 세션 client로 호출해야 RPC 안의 auth.uid()가 잡힌다(service_role로 부르면 null).
-  const { data, error } = await supabase.rpc("join_friender_room", { p_room_id: id, p_user_name: userName });
+  const { data, error } = await supabase.rpc("join_friender_room", { p_occurrence_id: id, p_user_name: userName });
   if (error) return { ok: false, error: "예약 처리 중 문제가 발생했습니다." };
 
   const code = String(data ?? "");
@@ -60,15 +64,15 @@ export async function joinRoom(roomId: string): Promise<JoinResult> {
   return { ok: true };
 }
 
-export async function leaveRoom(roomId: string): Promise<JoinResult> {
-  const id = String(roomId ?? "").trim();
+export async function leaveRoom(occurrenceId: string): Promise<JoinResult> {
+  const id = String(occurrenceId ?? "").trim();
   if (!id) return { ok: false, error: "잘못된 요청입니다." };
 
   const userId = await currentUserId();
   if (!userId) return { ok: false, error: "로그인이 필요합니다." };
 
   const admin = createAdminClient();
-  const { error } = await admin.from("friender_room_participants").delete().eq("room_id", id).eq("user_id", userId);
+  const { error } = await admin.from("friender_room_participants").delete().eq("occurrence_id", id).eq("user_id", userId);
   if (error) return { ok: false, error: "취소 처리 중 문제가 발생했습니다." };
 
   revalidatePath("/");
@@ -78,20 +82,24 @@ export async function leaveRoom(roomId: string): Promise<JoinResult> {
 
 // 방 입장 — 참가자(또는 개설자) 검증 + 시간창 검증 후 개설자 zoom URL(최신값) 반환.
 // enterClass(src/app/classroom/actions.ts)와 같은 구조. 클라가 새 탭으로 연다.
-export async function enterRoom(roomId: string): Promise<EnterRoomResult> {
-  const id = String(roomId ?? "").trim();
+export async function enterRoom(occurrenceId: string): Promise<EnterRoomResult> {
+  const id = String(occurrenceId ?? "").trim();
   if (!id) return { error: "잘못된 요청입니다." };
 
   const userId = await currentUserId();
   if (!userId) return { error: "로그인이 필요합니다. 다시 로그인해 주세요." };
 
   const admin = createAdminClient();
-  const { data: room } = await admin
-    .from("friender_rooms")
-    .select("id, friender_id, session_date, start_min, duration_min")
+  const { data: occ } = await admin
+    .from("friender_room_occurrences")
+    .select("id, occurrence_date, friender_rooms(id, friender_id, start_min, duration_min)")
     .eq("id", id)
     .maybeSingle();
-  if (!room) return { error: "방을 찾을 수 없어요." };
+  // ⚠️ 임베드 결과는 many-to-one이라 런타임엔 객체지만 untyped client 타입 추론은 배열로 본다.
+  type RoomEmbed = { id: string; friender_id: string; start_min: number; duration_min: number };
+  const occRow = occ as { id: string; occurrence_date: string; friender_rooms: RoomEmbed | RoomEmbed[] | null } | null;
+  const room = occRow ? (Array.isArray(occRow.friender_rooms) ? occRow.friender_rooms[0] : occRow.friender_rooms) : null;
+  if (!occRow || !room) return { error: "회차를 찾을 수 없어요." };
 
   // 개설자 본인이거나 참가자여야 입장 가능.
   const isHost = room.friender_id === userId;
@@ -99,8 +107,8 @@ export async function enterRoom(roomId: string): Promise<EnterRoomResult> {
   if (!isHost) {
     const { data: part } = await admin
       .from("friender_room_participants")
-      .select("room_id, entered_at")
-      .eq("room_id", id)
+      .select("occurrence_id, entered_at")
+      .eq("occurrence_id", id)
       .eq("user_id", userId)
       .maybeSingle();
     if (!part) return { error: "먼저 예약하기를 눌러 주세요." };
@@ -108,8 +116,8 @@ export async function enterRoom(roomId: string): Promise<EnterRoomResult> {
   }
 
   // 시간창 검증(서버 authoritative). ⚠️ lessonEndMin은 수업 전용(30→25분 축소)이라 쓰지 않는다.
-  const startMs = kstDateMinToMs(room.session_date, room.start_min);
-  const endMs = kstDateMinToMs(room.session_date, room.start_min + room.duration_min);
+  const startMs = kstDateMinToMs(occRow.occurrence_date, room.start_min);
+  const endMs = kstDateMinToMs(occRow.occurrence_date, room.start_min + room.duration_min);
   if (!canEnterClass(Date.now(), startMs, endMs)) {
     return { error: "시작 15분 전부터 입장할 수 있어요." };
   }
@@ -121,7 +129,7 @@ export async function enterRoom(roomId: string): Promise<EnterRoomResult> {
     const { error: stampError } = await admin
       .from("friender_room_participants")
       .update({ entered_at: new Date().toISOString() })
-      .eq("room_id", id)
+      .eq("occurrence_id", id)
       .eq("user_id", userId)
       .is("entered_at", null);
     if (stampError) console.error("[enterRoom] entered_at 기록 실패", stampError);
@@ -146,8 +154,8 @@ export type ReviewResult = { ok: boolean; error?: string };
 
 const MAX_COMMENT = 1000;
 
-export async function saveRoomReview(roomId: string, rating: number, comment: string): Promise<ReviewResult> {
-  const id = String(roomId ?? "").trim();
+export async function saveRoomReview(occurrenceId: string, rating: number, comment: string): Promise<ReviewResult> {
+  const id = String(occurrenceId ?? "").trim();
   if (!id) return { ok: false, error: "잘못된 요청입니다." };
 
   const supabase = createClient(await cookies());
@@ -163,15 +171,18 @@ export async function saveRoomReview(roomId: string, rating: number, comment: st
     .slice(0, MAX_COMMENT);
 
   const admin = createAdminClient();
-  const { data: room } = await admin
-    .from("friender_rooms")
-    .select("id, friender_id, title, session_date, start_min, duration_min")
+  const { data: occ } = await admin
+    .from("friender_room_occurrences")
+    .select("id, occurrence_date, friender_rooms(id, friender_id, title, start_min, duration_min)")
     .eq("id", id)
     .maybeSingle();
-  if (!room) return { ok: false, error: "방을 찾을 수 없어요." };
+  type RoomEmbed = { id: string; friender_id: string; title: string; start_min: number; duration_min: number };
+  const occRow = occ as { id: string; occurrence_date: string; friender_rooms: RoomEmbed | RoomEmbed[] | null } | null;
+  const room = occRow ? (Array.isArray(occRow.friender_rooms) ? occRow.friender_rooms[0] : occRow.friender_rooms) : null;
+  if (!occRow || !room) return { ok: false, error: "회차를 찾을 수 없어요." };
 
-  // 종료된 방만 — 진행 전·진행 중에는 평가할 대화가 아직 없다.
-  if (kstDateMinToMs(room.session_date, room.start_min + room.duration_min) > Date.now()) {
+  // 종료된 회차만 — 진행 전·진행 중에는 평가할 대화가 아직 없다.
+  if (kstDateMinToMs(occRow.occurrence_date, room.start_min + room.duration_min) > Date.now()) {
     return { ok: false, error: "대화가 끝난 뒤에 후기를 남길 수 있어요." };
   }
 
@@ -179,28 +190,29 @@ export async function saveRoomReview(roomId: string, rating: number, comment: st
   const { data: part } = await admin
     .from("friender_room_participants")
     .select("user_name, entered_at")
-    .eq("room_id", id)
+    .eq("occurrence_id", id)
     .eq("user_id", user.id)
     .maybeSingle();
-  if (!part) return { ok: false, error: "예약한 방에만 후기를 남길 수 있어요." };
+  if (!part) return { ok: false, error: "예약한 회차에만 후기를 남길 수 있어요." };
   if (!(part as { entered_at: string | null }).entered_at) {
     return { ok: false, error: "입장한 대화에만 후기를 남길 수 있어요." };
   }
 
-  // 방이 삭제돼도 후기가 의미를 유지하도록 표시 값을 스냅샷으로 함께 저장한다.
+  // 방/회차가 삭제돼도 후기가 의미를 유지하도록 표시 값을 스냅샷으로 함께 저장한다.
   const { error } = await admin.from("friender_room_reviews").upsert(
     {
-      room_id: id,
+      occurrence_id: id,
+      room_id: room.id,
       friender_id: room.friender_id,
       user_id: user.id,
       user_name: (part as { user_name: string | null }).user_name,
       room_title: room.title,
-      session_date: room.session_date,
+      session_date: occRow.occurrence_date,
       rating: score,
       comment: body || null,
       updated_at: new Date().toISOString(),
     },
-    { onConflict: "room_id,user_id" },
+    { onConflict: "occurrence_id,user_id" },
   );
   if (error) return { ok: false, error: "후기 저장 중 문제가 발생했습니다." };
 
@@ -209,15 +221,15 @@ export async function saveRoomReview(roomId: string, rating: number, comment: st
   return { ok: true };
 }
 
-export async function deleteRoomReview(roomId: string): Promise<ReviewResult> {
-  const id = String(roomId ?? "").trim();
+export async function deleteRoomReview(occurrenceId: string): Promise<ReviewResult> {
+  const id = String(occurrenceId ?? "").trim();
   if (!id) return { ok: false, error: "잘못된 요청입니다." };
 
   const userId = await currentUserId();
   if (!userId) return { ok: false, error: "로그인이 필요합니다." };
 
   const admin = createAdminClient();
-  const { error } = await admin.from("friender_room_reviews").delete().eq("room_id", id).eq("user_id", userId);
+  const { error } = await admin.from("friender_room_reviews").delete().eq("occurrence_id", id).eq("user_id", userId);
   if (error) return { ok: false, error: "삭제 중 문제가 발생했습니다." };
 
   revalidatePath("/mypage/rooms");

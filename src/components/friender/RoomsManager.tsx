@@ -40,7 +40,13 @@ export type FrienderRoom = {
   noShows: number; // 시작 + 유예까지 미입장이라 자리가 반환된 예약 수
   access_type: "public" | "shouting_only";
   linked_prep_course_id: string | null;
+  recurrence_days: number[] | null; // null/빈 배열=1회성
+  recurrence_until: string | null;
+  // 이 시리즈에서 가장 가까운, 아직 끝나지 않은 회차 id(있으면). 자가입장 버튼이 이 회차를 연다.
+  enterOccurrenceId: string | null;
 };
+
+const RECURRENCE_DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
 // 방 개설 폼에서 고를 수 있는 "연결 가능한 강좌" — 본인이 개설해 승인된 것만.
 export type PrepCourseOption = { id: string; title: string };
@@ -95,6 +101,9 @@ type Fields = {
   startMinute: number | null;
   durationMin: number;
   linkedPrepCourseId: string; // "" = 연결 안 함(공개방)
+  recurring: boolean;
+  recurrenceDays: number[]; // 0=일 ... 6=토, recurring일 때만 의미 있음
+  recurrenceUntil: string; // YYYY-MM-DD, recurring일 때만 의미 있음
 };
 
 // 시·분이 모두 선택됐을 때만 저장 가능한 값이 된다(둘 중 하나만 고른 상태 = 미선택).
@@ -110,6 +119,9 @@ const emptyForm = (): Fields => ({
   startMinute: null,
   durationMin: DEFAULT_DURATION,
   linkedPrepCourseId: "",
+  recurring: false,
+  recurrenceDays: [],
+  recurrenceUntil: "",
 });
 
 const toInput = (f: Fields): RoomInput => ({
@@ -121,7 +133,12 @@ const toInput = (f: Fields): RoomInput => ({
   startMin: startMinOf(f) ?? 0, // 호출부(canCreate/canSave)가 미선택을 이미 막는다
   durationMin: f.durationMin,
   linkedPrepCourseId: f.linkedPrepCourseId || null,
+  recurrenceDays: f.recurring && f.recurrenceDays.length > 0 ? f.recurrenceDays : null,
+  recurrenceUntil: f.recurring ? f.recurrenceUntil || null : null,
 });
+
+// 반복 요일이 하나라도 선택되고 종료일까지 있어야 "저장 가능한 반복"이다(폼 단계 검증, 서버가 authoritative).
+const recurrenceReady = (f: Fields): boolean => !f.recurring || (f.recurrenceDays.length > 0 && !!f.recurrenceUntil);
 
 export default function RoomsManager({
   rooms,
@@ -187,6 +204,9 @@ export default function RoomsManager({
       startMinute: r.start_min % 60,
       durationMin: r.duration_min,
       linkedPrepCourseId: r.linked_prep_course_id ?? "",
+      recurring: !!r.recurrence_days && r.recurrence_days.length > 0,
+      recurrenceDays: r.recurrence_days ?? [],
+      recurrenceUntil: r.recurrence_until ?? "",
     });
   };
 
@@ -222,7 +242,8 @@ export default function RoomsManager({
   const createConflict = useMemo(() => conflictOf(form), [form, rooms]);
   const editConflict = useMemo(() => (editingId ? conflictOf(editFields, editingId) : undefined), [editFields, editingId, rooms]);
 
-  const canCreate = hasZoomUrl && !!form.title.trim() && startMinOf(form) !== null && !pending && !createConflict;
+  const canCreate =
+    hasZoomUrl && !!form.title.trim() && startMinOf(form) !== null && recurrenceReady(form) && !pending && !createConflict;
 
   // 툴팁은 현재 이 화면에서만 쓰여 로컬로 감싼다(다른 화면에도 퍼지면 루트 layout으로 올릴 것).
   return (
@@ -285,7 +306,13 @@ export default function RoomsManager({
                       <Button
                         type="button"
                         variant="brand"
-                        disabled={pending || !editFields.title.trim() || startMinOf(editFields) === null || !!editConflict}
+                        disabled={
+                          pending ||
+                          !editFields.title.trim() ||
+                          startMinOf(editFields) === null ||
+                          !recurrenceReady(editFields) ||
+                          !!editConflict
+                        }
                         onClick={() =>
                           run(
                             () => updateRoom(r.id, toInput(editFields)),
@@ -361,6 +388,16 @@ export default function RoomsManager({
                   ["시간", `${fmtTime(startMinOf(form) ?? 0)}~${fmtRoomEnd((startMinOf(form) ?? 0) + form.durationMin)} (${form.durationMin}분)`],
                   ["난이도", roomLevelLabelKo(form.level)],
                   ["제한 인원", `${form.capacity}명`],
+                  [
+                    "반복",
+                    form.recurring && form.recurrenceDays.length > 0
+                      ? `매주 ${form.recurrenceDays
+                          .slice()
+                          .sort()
+                          .map((d) => RECURRENCE_DAY_LABELS[d])
+                          .join(", ")}요일 · ${formatDateKo(form.recurrenceUntil)}까지`
+                      : "1회성",
+                  ],
                   ["방 소개", form.description.trim() || "없음"],
                 ] as const
               ).map(([label, value]) => (
@@ -528,6 +565,61 @@ function RoomFields({
         </label>
       </div>
 
+      <div className="flex flex-col gap-2 sm:col-span-2">
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={fields.recurring}
+            disabled={disabled || lockSchedule}
+            onChange={(e) => set({ recurring: e.target.checked })}
+            className="size-4"
+          />
+          <span className="text-muted-fg-faint text-xs font-semibold">매주 반복</span>
+        </label>
+
+        {fields.recurring && (
+          <div className="bg-surface border-rule flex flex-col gap-3 rounded-lg border p-3">
+            <div className="flex flex-col gap-1">
+              <span className="text-muted-fg-faint text-xs font-semibold">반복 요일</span>
+              <div className="flex flex-wrap gap-1.5">
+                {RECURRENCE_DAY_LABELS.map((label, day) => {
+                  const active = fields.recurrenceDays.includes(day);
+                  return (
+                    <button
+                      key={day}
+                      type="button"
+                      disabled={disabled || lockSchedule}
+                      onClick={() =>
+                        set({
+                          recurrenceDays: active ? fields.recurrenceDays.filter((d) => d !== day) : [...fields.recurrenceDays, day].sort(),
+                        })
+                      }
+                      className={cn(
+                        "size-9 rounded-full border text-xs font-bold transition-colors disabled:opacity-60",
+                        active ? "bg-brand border-brand text-white" : "border-rule bg-white text-muted-fg hover:bg-surface",
+                      )}>
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <label className="flex flex-col gap-1">
+              <span className="text-muted-fg-faint text-xs font-semibold">반복 종료일</span>
+              <input
+                type="date"
+                value={fields.recurrenceUntil}
+                min={fields.sessionDate || minDate}
+                max={maxDate}
+                disabled={disabled || lockSchedule}
+                onChange={(e) => set({ recurrenceUntil: e.target.value })}
+                className={cn(selectClass, "w-full sm:w-auto")}
+              />
+            </label>
+          </div>
+        )}
+      </div>
+
       <label className="flex flex-col gap-1">
         <span className="text-muted-fg-faint text-xs font-semibold">난이도</span>
         <select value={fields.level} disabled={disabled} onChange={(e) => set({ level: e.target.value })} className={selectClass}>
@@ -586,7 +678,7 @@ function RoomFields({
 
       {lockSchedule && (
         <p className="text-muted-fg bg-surface border-rule rounded-lg border px-3 py-2 text-xs font-semibold sm:col-span-2">
-          예약한 회원이 있어 일정(날짜·시각·진행 시간)은 변경할 수 없어요. 주제·소개·난이도는 수정할 수 있습니다.
+          예약한 회원이 있어 일정(날짜·시각·진행 시간·반복 규칙)은 변경할 수 없어요. 주제·소개·난이도는 수정할 수 있습니다.
         </p>
       )}
       {lockLinkedCourse && fields.linkedPrepCourseId && (
@@ -642,6 +734,15 @@ function RoomRow({
               🔊 샤우팅 전용{linkedCourseTitle ? ` · ${linkedCourseTitle}` : ""}
             </span>
           )}
+          {room.recurrence_days && room.recurrence_days.length > 0 && (
+            <span className="bg-accent-blue-soft text-accent-blue-ink rounded-full px-2 py-0.5 font-bold">
+              🔁 매주 {room.recurrence_days
+                .slice()
+                .sort()
+                .map((d) => RECURRENCE_DAY_LABELS[d])
+                .join(", ")}
+            </span>
+          )}
           <span className={cn("inline-flex items-center gap-1", hasGuests && "text-cta font-bold")}>
             <Users aria-hidden className="size-3" />
             {room.participants}/{room.capacity}명
@@ -667,10 +768,11 @@ function RoomRow({
       {/* 아이콘만으로는 기능을 알기 어려워 툴팁을 붙인다. TooltipTrigger는 기본이 <button>이라
           type/onClick/disabled/aria-*가 그대로 전달된다(별도 래핑 불필요). */}
       <div className="flex shrink-0 items-center gap-1.5">
-        {/* 입장 — 시간창(시작 15분 전~종료) 안에서만. */}
-        {enterable && (
+        {/* 입장 — 시간창(시작 15분 전~종료) 안에서만. room.id는 시리즈 id라 입장에 못 쓴다 —
+            반드시 회차 id(enterOccurrenceId)로 열어야 한다. */}
+        {enterable && room.enterOccurrenceId && (
           <EnterRoomButton
-            roomId={room.id}
+            roomId={room.enterOccurrenceId}
             label="입장"
             disabled={pending}
             className="bg-cta mr-1 shrink-0 rounded-md px-3 py-1.5 text-xs font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60"

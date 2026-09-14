@@ -10,6 +10,7 @@ import { ROOM_LEVEL_VALUES } from "@/data/room-levels";
 import { todayKst } from "@/lib/booking";
 import { kstDateMinToMs } from "@/lib/classtime";
 import { roomsOverlap, type RoomSlot } from "@/lib/room-time";
+import { computeOccurrenceDates } from "@/lib/room-recurrence";
 
 export type FrienderActionState = { ok?: boolean; error?: string };
 
@@ -95,12 +96,15 @@ export type RoomInput = {
   description?: string;
   level: string;
   capacity: number;
-  sessionDate: string; // KST YYYY-MM-DD
+  sessionDate: string; // KST YYYY-MM-DD — 1회성이면 그날, 반복이면 첫 회차
   startMin: number;
   durationMin: number;
   // 연결하면 access_type='shouting_only'가 되어, 그 강좌를 수강확정한 학생만 입장 가능.
   // null/undefined = 공개방(access_type='public').
   linkedPrepCourseId?: string | null;
+  // 반복 규칙 — null/빈 배열=1회성. 값이 있으면 recurrenceUntil까지 매주 그 요일마다 회차를 만든다.
+  recurrenceDays?: number[] | null;
+  recurrenceUntil?: string | null; // YYYY-MM-DD, 반복일 때만 의미 있음(1회성이면 무시)
 };
 
 const ROOM_TITLE_MAX = 100;
@@ -117,9 +121,18 @@ function cleanText(value: string | undefined | null, max: number): string | null
   return trimmed ? trimmed.slice(0, max) : null;
 }
 
+const RECURRENCE_DAY_VALUES = [0, 1, 2, 3, 4, 5, 6];
+
 // 개설 폼 검증 — create/update 공용. 반환값이 있으면 에러 메시지.
 // 클라 <input min/max>·<select>를 우회한 제출을 서버에서 다시 막는다.
-function validateRoomInput(input: RoomInput): { error?: string; values?: Omit<RoomInput, "description"> & { description: string | null } } {
+function validateRoomInput(input: RoomInput): {
+  error?: string;
+  values?: Omit<RoomInput, "description" | "recurrenceDays" | "recurrenceUntil"> & {
+    description: string | null;
+    recurrenceDays: number[] | null;
+    recurrenceUntil: string | null;
+  };
+} {
   const title = cleanText(input?.title, ROOM_TITLE_MAX);
   if (!title) return { error: "오늘의 주제를 입력해 주세요." };
 
@@ -147,7 +160,22 @@ function validateRoomInput(input: RoomInput): { error?: string; values?: Omit<Ro
   // 이미 지난 시각 차단(오늘 날짜의 과거 시각).
   if (kstDateMinToMs(sessionDate, startMin) <= Date.now()) return { error: "이미 지난 시각에는 방을 개설할 수 없습니다." };
 
-  return { values: { title, description, level, capacity, sessionDate, startMin, durationMin } };
+  // 반복 규칙 — 요일을 하나라도 고르면 반복방. recurrenceUntil은 그때만 유효하고, 개설 가능 범위(90일) 안이어야 한다.
+  const rawDays = Array.isArray(input?.recurrenceDays) ? input.recurrenceDays : [];
+  const recurrenceDays = rawDays.length > 0 ? Array.from(new Set(rawDays.map(Number))).filter((d) => RECURRENCE_DAY_VALUES.includes(d)) : null;
+  if (rawDays.length > 0 && (!recurrenceDays || recurrenceDays.length === 0)) return { error: "반복 요일을 선택해 주세요." };
+
+  let recurrenceUntil: string | null = null;
+  if (recurrenceDays) {
+    const until = typeof input?.recurrenceUntil === "string" ? input.recurrenceUntil : "";
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(until)) return { error: "반복 종료일을 선택해 주세요." };
+    if (until < sessionDate) return { error: "반복 종료일은 개설 날짜 이후여야 해요." };
+    const maxDate = addDaysKst(today, ROOM_MAX_AHEAD_DAYS);
+    if (until > maxDate) return { error: `반복 종료일은 ${ROOM_MAX_AHEAD_DAYS}일 이내로 선택해 주세요.` };
+    recurrenceUntil = until;
+  }
+
+  return { values: { title, description, level, capacity, sessionDate, startMin, durationMin, recurrenceDays, recurrenceUntil } };
 }
 
 // YYYY-MM-DD + n일 (TZ 비종속).
@@ -158,32 +186,47 @@ function addDaysKst(dateStr: string, days: number): string {
   return t.toISOString().slice(0, 10);
 }
 
-// 같은 프렌더의 다른 방과 시간이 겹치는지 검사 — 겹치면 충돌한 방을 돌려준다(에러 문구용).
+// 같은 프렌더의 다른 방(의 회차)과 시간이 겹치는지 검사 — 겹치면 충돌한 회차를 돌려준다(에러 문구용).
 // 프렌더는 몸이 하나고 두 방의 입장 링크가 같은 zoom_url이라, 겹치면 참가자가 뒤섞인다.
+// 반복방이 되면서 "다른 방과 겹치는지"는 방 자체가 아니라 **실제 회차 날짜**끼리 비교해야 한다
+// (예: 매주 화요일 방과 이번 주 화요일 1회성 방은 그 날짜에서만 겹친다).
 // ⚠️ read-then-write라 원자적이지 않다. 참여 정원(join_friender_room RPC)과 달리 경쟁 주체가
 //    여러 명이 아니라 본인 한 명이고 제출 버튼이 pending 동안 잠기므로, EXCLUDE 제약
 //    (btree_gist + tstzrange)까지 가는 대신 이 수준을 수용한다.
 async function findOverlappingRoom(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  admin: any,
+  admin: ReturnType<typeof createAdminClient>,
   userId: string,
-  slot: RoomSlot,
-  excludeId?: string,
+  newDates: string[],
+  newStartMin: number,
+  newDurationMin: number,
+  excludeRoomId?: string,
 ): Promise<{ title: string; sessionDate: string; startMin: number; durationMin: number } | null> {
-  // 어제부터 조회 — 어제 23:30에 시작해 오늘로 넘어온 방을 놓치지 않기 위함.
-  // 그보다 과거 방은 이미 종료돼(새 방은 항상 미래 시작) 겹칠 수 없다.
-  const { data } = await admin
-    .from("friender_rooms")
-    .select("id, title, session_date, start_min, duration_min")
-    .eq("friender_id", userId)
-    .gte("session_date", addDaysKst(todayKst(), -1));
+  if (newDates.length === 0) return null;
+  const dateSet = new Set(newDates);
 
-  const rows = (data ?? []) as { id: string; title: string; session_date: string; start_min: number; duration_min: number }[];
-  for (const r of rows) {
-    if (excludeId && r.id === excludeId) continue;
-    const other: RoomSlot = { sessionDate: r.session_date, startMin: r.start_min, durationMin: r.duration_min };
-    if (roomsOverlap(slot, other)) {
-      return { title: r.title, sessionDate: r.session_date, startMin: r.start_min, durationMin: r.duration_min };
+  const { data: roomsData } = await admin.from("friender_rooms").select("id, title, start_min, duration_min").eq("friender_id", userId);
+  const rooms = ((roomsData ?? []) as { id: string; title: string; start_min: number; duration_min: number }[]).filter(
+    (r) => r.id !== excludeRoomId,
+  );
+  if (rooms.length === 0) return null;
+  const roomById = new Map(rooms.map((r) => [r.id, r]));
+
+  const { data: occData } = await admin
+    .from("friender_room_occurrences")
+    .select("room_id, occurrence_date")
+    .in(
+      "room_id",
+      rooms.map((r) => r.id),
+    );
+
+  for (const occ of (occData ?? []) as { room_id: string; occurrence_date: string }[]) {
+    if (!dateSet.has(occ.occurrence_date)) continue;
+    const r = roomById.get(occ.room_id);
+    if (!r) continue;
+    const newSlot: RoomSlot = { sessionDate: occ.occurrence_date, startMin: newStartMin, durationMin: newDurationMin };
+    const other: RoomSlot = { sessionDate: occ.occurrence_date, startMin: r.start_min, durationMin: r.duration_min };
+    if (roomsOverlap(newSlot, other)) {
+      return { title: r.title, sessionDate: occ.occurrence_date, startMin: r.start_min, durationMin: r.duration_min };
     }
   }
   return null;
@@ -227,30 +270,53 @@ export async function createRoom(input: RoomInput): Promise<RoomActionResult> {
   const profile = (prof ?? {}) as { first_name?: string | null; last_name?: string | null; nickname?: string | null; zoom_url?: string | null };
   if (!profile.zoom_url?.trim()) return { ok: false, error: "먼저 프로필에서 Zoom URL을 등록해 주세요." };
 
-  const conflict = await findOverlappingRoom(admin, userId, v.values);
+  const occurrenceDates = computeOccurrenceDates({
+    sessionDate: v.values.sessionDate,
+    recurrenceDays: v.values.recurrenceDays,
+    recurrenceUntil: v.values.recurrenceUntil,
+  });
+
+  const conflict = await findOverlappingRoom(admin, userId, occurrenceDates, v.values.startMin, v.values.durationMin);
   if (conflict) return { ok: false, error: overlapError(conflict) };
 
   const linked = await resolveLinkedPrepCourse(admin, userId, input.linkedPrepCourseId);
   if (linked.error) return { ok: false, error: linked.error };
 
-  const { error } = await admin.from("friender_rooms").insert({
-    friender_id: userId,
-    // 한국 관례상 성+이름을 공백 없이 붙임(앱 전반의 표시명 규칙).
-    friender_name: `${profile.last_name ?? ""}${profile.first_name ?? ""}` || null,
-    friender_nickname: profile.nickname ?? null,
-    title: v.values.title,
-    description: v.values.description,
-    level: v.values.level,
-    capacity: v.values.capacity,
-    session_date: v.values.sessionDate,
-    start_min: v.values.startMin,
-    duration_min: v.values.durationMin,
-    access_type: linked.value ? "shouting_only" : "public",
-    linked_prep_course_id: linked.value,
-  });
-  if (error) return { ok: false, error: "개설 중 문제가 발생했습니다." };
+  const { data: created, error } = await admin
+    .from("friender_rooms")
+    .insert({
+      friender_id: userId,
+      // 한국 관례상 성+이름을 공백 없이 붙임(앱 전반의 표시명 규칙).
+      friender_name: `${profile.last_name ?? ""}${profile.first_name ?? ""}` || null,
+      friender_nickname: profile.nickname ?? null,
+      title: v.values.title,
+      description: v.values.description,
+      level: v.values.level,
+      capacity: v.values.capacity,
+      session_date: v.values.sessionDate,
+      start_min: v.values.startMin,
+      duration_min: v.values.durationMin,
+      access_type: linked.value ? "shouting_only" : "public",
+      linked_prep_course_id: linked.value,
+      recurrence_days: v.values.recurrenceDays,
+      recurrence_until: v.values.recurrenceUntil,
+    })
+    .select("id")
+    .single();
+  if (error || !created) return { ok: false, error: "개설 중 문제가 발생했습니다." };
+
+  // 회차 실체화 — prep_courses/prep_sessions와 같은 패턴(반복이든 1회성이든 항상 최소 1개).
+  const { error: occError } = await admin
+    .from("friender_room_occurrences")
+    .insert(occurrenceDates.map((occurrence_date) => ({ room_id: created.id, occurrence_date })));
+  if (occError) {
+    // 회차 생성 실패 시 방만 덩그러니 남기지 않는다(고아 시리즈 방지).
+    await admin.from("friender_rooms").delete().eq("id", created.id);
+    return { ok: false, error: "개설 중 문제가 발생했습니다." };
+  }
 
   revalidatePath("/friender", "layout");
+  revalidatePath("/");
   return { ok: true };
 }
 
@@ -275,22 +341,32 @@ export async function updateRoom(id: string, input: RoomInput): Promise<RoomActi
   // 이미 시작한 방은 수정 불가(삭제·숨김만 허용) — 관리 화면의 '지난 방' 규칙과 동일.
   const { data: cur } = await admin
     .from("friender_rooms")
-    .select("session_date, start_min, duration_min, linked_prep_course_id")
+    .select("session_date, start_min, duration_min, linked_prep_course_id, recurrence_days, recurrence_until")
     .eq("id", id)
     .eq("friender_id", userId)
     .maybeSingle();
-  const room = cur as { session_date?: string; start_min?: number; duration_min?: number; linked_prep_course_id?: string | null } | null;
+  const room = cur as {
+    session_date?: string;
+    start_min?: number;
+    duration_min?: number;
+    linked_prep_course_id?: string | null;
+    recurrence_days?: number[] | null;
+    recurrence_until?: string | null;
+  } | null;
   if (!room) return { ok: false, error: "방을 찾을 수 없습니다. 목록을 새로고침해 주세요." };
   if (kstDateMinToMs(room.session_date, room.start_min) <= Date.now()) return { ok: false, error: "이미 시작된 방은 수정할 수 없습니다." };
 
-  // 예약자가 있으면 일정은 고정 — 방 관련 알림 인프라가 없어 옮기면 예약자가 통보 없이 끌려간다.
-  // 주제·소개·난이도는 계속 바꿀 수 있다.
+  // 예약자가 있으면(반복이면 이 시리즈의 어느 회차든) 일정·반복 규칙은 고정 — 회차를 다시 만들면
+  // 기존 참가 기록이 엉뚱한 날짜에 매달리게 된다. 주제·소개·난이도는 계속 바꿀 수 있다.
   const reserved = await countParticipants(admin, id);
+  const recurrenceChanged =
+    JSON.stringify(v.values.recurrenceDays ?? []) !== JSON.stringify(room.recurrence_days ?? []) ||
+    (v.values.recurrenceUntil ?? null) !== (room.recurrence_until ?? null);
   if (reserved > 0) {
     const scheduleChanged =
       v.values.sessionDate !== room.session_date || v.values.startMin !== room.start_min || v.values.durationMin !== room.duration_min;
-    if (scheduleChanged) {
-      return { ok: false, error: "예약한 회원이 있어 일정을 변경할 수 없어요. 주제·소개·난이도는 수정할 수 있습니다." };
+    if (scheduleChanged || recurrenceChanged) {
+      return { ok: false, error: "예약한 회원이 있어 일정(반복 규칙 포함)을 변경할 수 없어요. 주제·소개·난이도는 수정할 수 있습니다." };
     }
     // 이미 잡힌 자리를 무효화하는 변경도 같은 이유로 막는다.
     if (v.values.capacity < reserved) {
@@ -298,8 +374,14 @@ export async function updateRoom(id: string, input: RoomInput): Promise<RoomActi
     }
   }
 
+  const occurrenceDates = computeOccurrenceDates({
+    sessionDate: v.values.sessionDate,
+    recurrenceDays: v.values.recurrenceDays,
+    recurrenceUntil: v.values.recurrenceUntil,
+  });
+
   // 수정 대상 자신은 제외 — 시간을 그대로 두고 제목만 바꾸는 경우가 막히면 안 된다.
-  const conflict = await findOverlappingRoom(admin, userId, v.values, id);
+  const conflict = await findOverlappingRoom(admin, userId, occurrenceDates, v.values.startMin, v.values.durationMin, id);
   if (conflict) return { ok: false, error: overlapError(conflict) };
 
   const linked = await resolveLinkedPrepCourse(admin, userId, input.linkedPrepCourseId);
@@ -321,12 +403,25 @@ export async function updateRoom(id: string, input: RoomInput): Promise<RoomActi
       duration_min: v.values.durationMin,
       access_type: linked.value ? "shouting_only" : "public",
       linked_prep_course_id: linked.value,
+      recurrence_days: v.values.recurrenceDays,
+      recurrence_until: v.values.recurrenceUntil,
     })
     .eq("id", id)
     .eq("friender_id", userId);
   if (error) return { ok: false, error: "수정 중 문제가 발생했습니다." };
 
+  // reserved===0으로 여기까지 왔으면(스케줄/반복 변경이 허용된 경우) 회차를 새로 맞춘다.
+  // 참가자가 전혀 없어 안전하게 지우고 다시 만들 수 있다(위 가드가 이미 확인).
+  if (reserved === 0) {
+    await admin.from("friender_room_occurrences").delete().eq("room_id", id);
+    const { error: occError } = await admin
+      .from("friender_room_occurrences")
+      .insert(occurrenceDates.map((occurrence_date) => ({ room_id: id, occurrence_date })));
+    if (occError) return { ok: false, error: "수정 중 문제가 발생했습니다." };
+  }
+
   revalidatePath("/friender", "layout");
+  revalidatePath("/");
   return { ok: true };
 }
 

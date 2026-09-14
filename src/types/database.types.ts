@@ -432,10 +432,40 @@ export type Database = {
         }
         Relationships: []
       }
+      friender_room_occurrences: {
+        Row: {
+          created_at: string
+          id: string
+          occurrence_date: string
+          room_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          occurrence_date: string
+          room_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          occurrence_date?: string
+          room_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "friender_room_occurrences_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "friender_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       friender_room_participants: {
         Row: {
           created_at: string
           entered_at: string | null
+          occurrence_id: string
           room_id: string
           user_id: string
           user_name: string | null
@@ -443,6 +473,7 @@ export type Database = {
         Insert: {
           created_at?: string
           entered_at?: string | null
+          occurrence_id: string
           room_id: string
           user_id: string
           user_name?: string | null
@@ -450,11 +481,19 @@ export type Database = {
         Update: {
           created_at?: string
           entered_at?: string | null
+          occurrence_id?: string
           room_id?: string
           user_id?: string
           user_name?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "friender_room_participants_occurrence_id_fkey"
+            columns: ["occurrence_id"]
+            isOneToOne: false
+            referencedRelation: "friender_room_occurrences"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "friender_room_participants_room_id_fkey"
             columns: ["room_id"]
@@ -470,6 +509,7 @@ export type Database = {
           created_at: string
           friender_id: string
           id: string
+          occurrence_id: string | null
           rating: number
           room_id: string | null
           room_title: string | null
@@ -483,6 +523,7 @@ export type Database = {
           created_at?: string
           friender_id: string
           id?: string
+          occurrence_id?: string | null
           rating: number
           room_id?: string | null
           room_title?: string | null
@@ -496,6 +537,7 @@ export type Database = {
           created_at?: string
           friender_id?: string
           id?: string
+          occurrence_id?: string | null
           rating?: number
           room_id?: string | null
           room_title?: string | null
@@ -505,6 +547,13 @@ export type Database = {
           user_name?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "friender_room_reviews_occurrence_id_fkey"
+            columns: ["occurrence_id"]
+            isOneToOne: false
+            referencedRelation: "friender_room_occurrences"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "friender_room_reviews_room_id_fkey"
             columns: ["room_id"]
@@ -527,6 +576,8 @@ export type Database = {
           id: string
           level: string
           linked_prep_course_id: string | null
+          recurrence_days: number[] | null
+          recurrence_until: string | null
           session_date: string
           start_min: number
           title: string
@@ -544,6 +595,8 @@ export type Database = {
           id?: string
           level: string
           linked_prep_course_id?: string | null
+          recurrence_days?: number[] | null
+          recurrence_until?: string | null
           session_date: string
           start_min: number
           title: string
@@ -561,6 +614,8 @@ export type Database = {
           id?: string
           level?: string
           linked_prep_course_id?: string | null
+          recurrence_days?: number[] | null
+          recurrence_until?: string | null
           session_date?: string
           start_min?: number
           title?: string
@@ -1328,7 +1383,7 @@ export type Database = {
       }
       increment_notice_view: { Args: { p_id: string }; Returns: undefined }
       join_friender_room: {
-        Args: { p_room_id: string; p_user_name: string }
+        Args: { p_occurrence_id: string; p_user_name: string }
         Returns: string
       }
       join_prep_course: { Args: { p_course_id: string }; Returns: string }
