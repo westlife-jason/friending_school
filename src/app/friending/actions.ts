@@ -26,6 +26,7 @@ const JOIN_ERROR: Record<string, string> = {
   own_room: "내가 개설한 방에는 예약할 수 없어요.",
   ended: "이미 종료된 방이에요.",
   full: "정원이 모두 찼어요.",
+  shouting_required: "이 방은 연결된 샤우팅 강좌를 수강확정한 학생만 입장할 수 있어요.",
 };
 
 export async function joinRoom(roomId: string): Promise<JoinResult> {

@@ -38,7 +38,12 @@ export type FrienderRoom = {
   duration_min: number;
   participants: number; // 자리를 잡고 있는 예약 인원(노쇼 제외, 서버가 service_role로 집계)
   noShows: number; // 시작 + 유예까지 미입장이라 자리가 반환된 예약 수
+  access_type: "public" | "shouting_only";
+  linked_prep_course_id: string | null;
 };
+
+// 방 개설 폼에서 고를 수 있는 "연결 가능한 강좌" — 본인이 개설해 승인된 것만.
+export type PrepCourseOption = { id: string; title: string };
 
 // 개설 가능 시간대 00:00~23:50(10분 간격, 24시간). 시·분을 각각 고르게 나눠 둔 이유는
 // 10분 단위면 단일 드롭다운이 144개가 돼 스크롤 부담이 크기 때문(24개 + 6개로 분할).
@@ -89,6 +94,7 @@ type Fields = {
   startHour: number | null;
   startMinute: number | null;
   durationMin: number;
+  linkedPrepCourseId: string; // "" = 연결 안 함(공개방)
 };
 
 // 시·분이 모두 선택됐을 때만 저장 가능한 값이 된다(둘 중 하나만 고른 상태 = 미선택).
@@ -103,6 +109,7 @@ const emptyForm = (): Fields => ({
   startHour: null,
   startMinute: null,
   durationMin: DEFAULT_DURATION,
+  linkedPrepCourseId: "",
 });
 
 const toInput = (f: Fields): RoomInput => ({
@@ -113,9 +120,20 @@ const toInput = (f: Fields): RoomInput => ({
   sessionDate: f.sessionDate,
   startMin: startMinOf(f) ?? 0, // 호출부(canCreate/canSave)가 미선택을 이미 막는다
   durationMin: f.durationMin,
+  linkedPrepCourseId: f.linkedPrepCourseId || null,
 });
 
-export default function RoomsManager({ rooms, hasZoomUrl }: { rooms: FrienderRoom[]; hasZoomUrl: boolean }) {
+export default function RoomsManager({
+  rooms,
+  hasZoomUrl,
+  prepCourses,
+}: {
+  rooms: FrienderRoom[];
+  hasZoomUrl: boolean;
+  /** 본인이 개설해 승인된 샤우팅 강좌 — 방을 여기 연결하면 그 강좌 수강생 전용방이 된다. */
+  prepCourses: PrepCourseOption[];
+}) {
+  const prepCourseTitleById = useMemo(() => new Map(prepCourses.map((c) => [c.id, c.title])), [prepCourses]);
   const router = useRouter();
   const [form, setForm] = useState<Fields>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -168,6 +186,7 @@ export default function RoomsManager({ rooms, hasZoomUrl }: { rooms: FrienderRoo
       startHour: Math.floor(r.start_min / 60),
       startMinute: r.start_min % 60,
       durationMin: r.duration_min,
+      linkedPrepCourseId: r.linked_prep_course_id ?? "",
     });
   };
 
@@ -221,7 +240,14 @@ export default function RoomsManager({ rooms, hasZoomUrl }: { rooms: FrienderRoo
         {/* 개설 폼 */}
         <div className="border-rule mt-4 rounded-xl border bg-white p-5">
           <h3 className="text-ink text-sm font-extrabold">새 방 개설</h3>
-          <RoomFields fields={form} onChange={setForm} minDate={minDate} maxDate={maxDate} disabled={!hasZoomUrl || pending} />
+          <RoomFields
+            fields={form}
+            onChange={setForm}
+            minDate={minDate}
+            maxDate={maxDate}
+            disabled={!hasZoomUrl || pending}
+            prepCourses={prepCourses}
+          />
           {createConflict && <ConflictNotice room={createConflict} />}
           <div className="mt-4 flex justify-end">
             <Button type="button" variant="brand" disabled={!canCreate} onClick={() => setConfirmCreate(true)}>
@@ -248,6 +274,8 @@ export default function RoomsManager({ rooms, hasZoomUrl }: { rooms: FrienderRoo
                       disabled={pending}
                       lockSchedule={r.participants > 0}
                       minCapacity={Math.max(1, r.participants)}
+                      prepCourses={prepCourses}
+                      lockLinkedCourse={r.participants > 0}
                     />
                     {editConflict && <ConflictNotice room={editConflict} />}
                     <div className="mt-4 flex justify-end gap-2">
@@ -275,6 +303,7 @@ export default function RoomsManager({ rooms, hasZoomUrl }: { rooms: FrienderRoo
                     key={r.id}
                     room={r}
                     pending={pending}
+                    linkedCourseTitle={r.linked_prep_course_id ? prepCourseTitleById.get(r.linked_prep_course_id) : undefined}
                     enterable={canEnterClass(
                       now,
                       kstDateMinToMs(r.session_date, r.start_min),
@@ -297,7 +326,15 @@ export default function RoomsManager({ rooms, hasZoomUrl }: { rooms: FrienderRoo
             <div className="border-rule mt-2 overflow-hidden rounded-xl border bg-white">
               <ul className="list-none">
                 {past.map((r) => (
-                  <RoomRow key={r.id} room={r} pending={pending} isPast onOpenInfo={setInfoTarget} onDelete={() => setDeleteTarget(r)} />
+                  <RoomRow
+                    key={r.id}
+                    room={r}
+                    pending={pending}
+                    isPast
+                    linkedCourseTitle={r.linked_prep_course_id ? prepCourseTitleById.get(r.linked_prep_course_id) : undefined}
+                    onOpenInfo={setInfoTarget}
+                    onDelete={() => setDeleteTarget(r)}
+                  />
                 ))}
               </ul>
             </div>
@@ -387,6 +424,8 @@ function RoomFields({
   disabled,
   lockSchedule,
   minCapacity = 1,
+  prepCourses,
+  lockLinkedCourse,
 }: {
   fields: Fields;
   onChange: (f: Fields) => void;
@@ -396,6 +435,9 @@ function RoomFields({
   // 예약자가 있는 방 — 날짜·시각·진행 시간만 잠근다(주제·난이도·정원·소개는 계속 수정 가능).
   lockSchedule?: boolean;
   minCapacity?: number;
+  prepCourses: PrepCourseOption[];
+  // 예약자가 있으면 연결 강좌도 고정(입장 자격이 갑자기 바뀌면 안 된다).
+  lockLinkedCourse?: boolean;
 }) {
   const set = (patch: Partial<Fields>) => onChange({ ...fields, ...patch });
   const selectClass = "border-rule focus:border-accent-blue h-10 rounded-md border bg-white px-3 text-sm outline-none disabled:opacity-60";
@@ -523,9 +565,33 @@ function RoomFields({
         />
       </label>
 
+      {prepCourses.length > 0 && (
+        <label className="flex flex-col gap-1 sm:col-span-2">
+          <span className="text-muted-fg-faint text-xs font-semibold">연결할 샤우팅 강좌 (선택)</span>
+          <select
+            value={fields.linkedPrepCourseId}
+            disabled={disabled || lockLinkedCourse}
+            onChange={(e) => set({ linkedPrepCourseId: e.target.value })}
+            className={selectClass}>
+            <option value="">연결 안 함 (공개방)</option>
+            {prepCourses.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.title}
+              </option>
+            ))}
+          </select>
+          <span className="text-muted-fg-faint text-xs">연결하면 그 강좌를 수강확정한 학생만 이 방에 입장할 수 있어요.</span>
+        </label>
+      )}
+
       {lockSchedule && (
         <p className="text-muted-fg bg-surface border-rule rounded-lg border px-3 py-2 text-xs font-semibold sm:col-span-2">
           예약한 회원이 있어 일정(날짜·시각·진행 시간)은 변경할 수 없어요. 주제·소개·난이도는 수정할 수 있습니다.
+        </p>
+      )}
+      {lockLinkedCourse && fields.linkedPrepCourseId && (
+        <p className="text-muted-fg bg-surface border-rule rounded-lg border px-3 py-2 text-xs font-semibold sm:col-span-2">
+          예약한 회원이 있어 연결 강좌는 변경할 수 없어요.
         </p>
       )}
     </div>
@@ -537,6 +603,7 @@ function RoomRow({
   pending,
   isPast,
   enterable,
+  linkedCourseTitle,
   onOpenInfo,
   onEdit,
   onDelete,
@@ -545,6 +612,8 @@ function RoomRow({
   pending?: boolean;
   isPast?: boolean;
   enterable?: boolean;
+  /** 연결된 강좌 제목 — access_type이 shouting_only일 때만 의미 있음. */
+  linkedCourseTitle?: string;
   onOpenInfo: (description: string) => void;
   onEdit?: () => void;
   onDelete: () => void;
@@ -568,6 +637,11 @@ function RoomRow({
         </p>
         <p className="text-muted-fg-faint mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
           <span className="bg-accent-blue-soft text-accent-blue-ink rounded-full px-2 py-0.5 font-bold">{roomLevelLabelKo(room.level)}</span>
+          {room.access_type === "shouting_only" && (
+            <span className="bg-progress/10 text-progress rounded-full px-2 py-0.5 font-bold" title={linkedCourseTitle}>
+              🔊 샤우팅 전용{linkedCourseTitle ? ` · ${linkedCourseTitle}` : ""}
+            </span>
+          )}
           <span className={cn("inline-flex items-center gap-1", hasGuests && "text-cta font-bold")}>
             <Users aria-hidden className="size-3" />
             {room.participants}/{room.capacity}명

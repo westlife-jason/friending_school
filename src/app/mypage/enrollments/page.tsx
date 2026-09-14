@@ -2,11 +2,13 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { TOTAL_SESSIONS, type Slot } from "@/lib/availability";
+import { todayKst } from "@/lib/booking";
 import { getCourse } from "@/data/courses";
 import { COURSE_PRICE_KRW } from "@/data/pricing";
 import { formatPrice } from "@/data/currencies";
 import StudentEnrollments, { type StudentEnrollment } from "@/components/mypage/StudentEnrollments";
 import MyPrepEnrollments, { type MyPrepEnrollment } from "@/components/mypage/MyPrepEnrollments";
+import ShoutingRoomAccess, { type AccessibleRoom } from "@/components/mypage/ShoutingRoomAccess";
 
 type EnrollmentRow = {
   id: string;
@@ -106,10 +108,36 @@ export default async function MyPageEnrollments() {
     refundedKrw: prepRefundByEnrollment.get(e.id) ?? 0,
   }));
 
+  // 무료입장 가능한 연습방 — 수강확정한 강좌에 연결된 shouting_only 방(예정분만).
+  const confirmedCourseIds = prepEnrollments.filter((e) => e.status === "수강확정").map((e) => e.course_id);
+  let accessibleRooms: AccessibleRoom[] = [];
+  if (confirmedCourseIds.length > 0) {
+    const { data: roomRows } = await supabase
+      .from("friender_rooms")
+      .select("id, title, session_date, start_min, duration_min, linked_prep_course_id")
+      .eq("access_type", "shouting_only")
+      .in("linked_prep_course_id", confirmedCourseIds)
+      .gte("session_date", todayKst())
+      .order("session_date", { ascending: true })
+      .order("start_min", { ascending: true });
+    const courseTitleById = new Map(prepEnrollments.map((e) => [e.course_id, e.course_title]));
+    accessibleRooms = (
+      (roomRows ?? []) as { id: string; title: string; session_date: string; start_min: number; duration_min: number; linked_prep_course_id: string }[]
+    ).map((r) => ({
+      id: r.id,
+      title: r.title,
+      sessionDate: r.session_date,
+      startMin: r.start_min,
+      durationMin: r.duration_min,
+      courseTitle: courseTitleById.get(r.linked_prep_course_id) ?? "샤우팅 강좌",
+    }));
+  }
+
   return (
     <div className="space-y-5">
       <StudentEnrollments enrollments={enrollments} />
       <MyPrepEnrollments enrollments={prepEnrollments} />
+      <ShoutingRoomAccess rooms={accessibleRooms} />
     </div>
   );
 }

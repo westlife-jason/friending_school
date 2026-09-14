@@ -4,7 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { kstDateMinToMs } from "@/lib/classtime";
 import { seatHeld } from "@/lib/room-time";
-import RoomsManager, { type FrienderRoom } from "@/components/friender/RoomsManager";
+import RoomsManager, { type FrienderRoom, type PrepCourseOption } from "@/components/friender/RoomsManager";
 
 export default async function FrienderRoomsPage() {
   const supabase = createClient(await cookies());
@@ -19,7 +19,7 @@ export default async function FrienderRoomsPage() {
   //    실제로 이 필터가 없던 동안 남의 방이 관리 목록에 섞여 나왔다.
   const { data } = await supabase
     .from("friender_rooms")
-    .select("id, title, description, level, capacity, session_date, start_min, duration_min")
+    .select("id, title, description, level, capacity, session_date, start_min, duration_min, access_type, linked_prep_course_id")
     .eq("friender_id", user.id)
     .order("session_date", { ascending: false })
     .order("start_min", { ascending: false });
@@ -59,5 +59,9 @@ export default async function FrienderRoomsPage() {
   const { data: prof } = await supabase.from("profiles").select("zoom_url").eq("id", user.id).maybeSingle();
   const hasZoomUrl = !!(prof as { zoom_url?: string | null } | null)?.zoom_url?.trim();
 
-  return <RoomsManager rooms={rooms} hasZoomUrl={hasZoomUrl} />;
+  // 방을 연결할 수 있는 강좌 목록 — 본인이 개설해 승인된 것만(폼의 select 옵션용).
+  const { data: coursesData } = await supabase.from("prep_courses").select("id, title").eq("friender_id", user.id).eq("status", "승인");
+  const prepCourses: PrepCourseOption[] = (coursesData ?? []) as PrepCourseOption[];
+
+  return <RoomsManager rooms={rooms} hasZoomUrl={hasZoomUrl} prepCourses={prepCourses} />;
 }

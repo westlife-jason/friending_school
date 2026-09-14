@@ -54,6 +54,7 @@ export type PublicRoom = {
   participants: number;
   joined: boolean;
   enteredAt: string | null; // 내 입장 시각(RLS select_own) — 노쇼 판정용. 미예약이면 null
+  accessType: "public" | "shouting_only"; // shouting_only=연결된 샤우팅 강좌 수강확정생 전용(입장 자격은 RPC가 강제)
 };
 
 const PAGE_STEP = 12;
@@ -380,6 +381,9 @@ function RoomCard({
           </span>
           <span>{when}</span>
           <span className="bg-accent-blue-soft text-accent-blue-ink rounded-full px-2 py-0.5 text-[11px] font-bold">{levelLabel}</span>
+          {room.accessType === "shouting_only" && (
+            <span className="bg-progress/10 text-progress rounded-full px-2 py-0.5 text-[11px] font-bold">🔊 샤우팅 수강생 전용</span>
+          )}
         </p>
 
         {/* 소개는 모달로 — 문단을 조건부로 렌더하면 카드마다 CTA 높이가 달라진다(버튼은 항상 렌더, 소개 없으면 비활성). */}

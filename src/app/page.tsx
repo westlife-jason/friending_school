@@ -21,6 +21,7 @@ type RoomRow = {
   session_date: string;
   start_min: number;
   duration_min: number;
+  access_type: "public" | "shouting_only";
 };
 
 type ProfileRow = {
@@ -48,7 +49,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ r
   // 공개 조회 — RLS friender_rooms_select_public이 anon에도 열려 있다.
   const { data } = await supabase
     .from("friender_rooms")
-    .select("id, friender_id, friender_name, friender_nickname, title, description, level, capacity, session_date, start_min, duration_min")
+    .select(
+      "id, friender_id, friender_name, friender_nickname, title, description, level, capacity, session_date, start_min, duration_min, access_type",
+    )
     .gte("session_date", todayKst())
     .order("session_date", { ascending: true })
     .order("start_min", { ascending: true });
@@ -130,6 +133,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ r
     participants: countByRoom.get(r.id) ?? 0,
     joined: enteredAtByRoom.has(r.id),
     enteredAt: enteredAtByRoom.get(r.id) ?? null,
+    accessType: r.access_type,
   }));
 
   return (

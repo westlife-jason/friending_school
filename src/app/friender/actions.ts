@@ -98,6 +98,9 @@ export type RoomInput = {
   sessionDate: string; // KST YYYY-MM-DD
   startMin: number;
   durationMin: number;
+  // 연결하면 access_type='shouting_only'가 되어, 그 강좌를 수강확정한 학생만 입장 가능.
+  // null/undefined = 공개방(access_type='public').
+  linkedPrepCourseId?: string | null;
 };
 
 const ROOM_TITLE_MAX = 100;
@@ -192,6 +195,24 @@ function overlapError(c: { title: string; startMin: number; durationMin: number 
   return `이미 같은 시간에 개설한 방이 있어요. (${c.title} · ${fmt(c.startMin)}~${fmt(c.startMin + c.durationMin)})`;
 }
 
+// 연결할 강좌 검증 — 본인 소유 + 승인된 강좌만 허용(타인 강좌 도용·미승인 강좌 연결 차단).
+// 반환: { error } 또는 { value: courseId | null }(null=연결 안 함=공개방).
+async function resolveLinkedPrepCourse(
+  admin: ReturnType<typeof createAdminClient>,
+  userId: string,
+  rawId: string | null | undefined,
+): Promise<{ error?: string; value?: string | null }> {
+  const id = typeof rawId === "string" ? rawId.trim() : "";
+  if (!id) return { value: null };
+
+  const { data } = await admin.from("prep_courses").select("id, friender_id, status").eq("id", id).maybeSingle();
+  const course = data as { id: string; friender_id: string; status: string } | null;
+  if (!course || course.friender_id !== userId || course.status !== "승인") {
+    return { error: "연결할 강좌를 찾을 수 없습니다. 본인이 개설해 승인된 강좌만 연결할 수 있어요." };
+  }
+  return { value: course.id };
+}
+
 export async function createRoom(input: RoomInput): Promise<RoomActionResult> {
   const userId = await requireFriender();
   if (!userId) return { ok: false, error: "권한이 없습니다." };
@@ -209,6 +230,9 @@ export async function createRoom(input: RoomInput): Promise<RoomActionResult> {
   const conflict = await findOverlappingRoom(admin, userId, v.values);
   if (conflict) return { ok: false, error: overlapError(conflict) };
 
+  const linked = await resolveLinkedPrepCourse(admin, userId, input.linkedPrepCourseId);
+  if (linked.error) return { ok: false, error: linked.error };
+
   const { error } = await admin.from("friender_rooms").insert({
     friender_id: userId,
     // 한국 관례상 성+이름을 공백 없이 붙임(앱 전반의 표시명 규칙).
@@ -221,6 +245,8 @@ export async function createRoom(input: RoomInput): Promise<RoomActionResult> {
     session_date: v.values.sessionDate,
     start_min: v.values.startMin,
     duration_min: v.values.durationMin,
+    access_type: linked.value ? "shouting_only" : "public",
+    linked_prep_course_id: linked.value,
   });
   if (error) return { ok: false, error: "개설 중 문제가 발생했습니다." };
 
@@ -249,11 +275,11 @@ export async function updateRoom(id: string, input: RoomInput): Promise<RoomActi
   // 이미 시작한 방은 수정 불가(삭제·숨김만 허용) — 관리 화면의 '지난 방' 규칙과 동일.
   const { data: cur } = await admin
     .from("friender_rooms")
-    .select("session_date, start_min, duration_min")
+    .select("session_date, start_min, duration_min, linked_prep_course_id")
     .eq("id", id)
     .eq("friender_id", userId)
     .maybeSingle();
-  const room = cur as { session_date?: string; start_min?: number; duration_min?: number } | null;
+  const room = cur as { session_date?: string; start_min?: number; duration_min?: number; linked_prep_course_id?: string | null } | null;
   if (!room) return { ok: false, error: "방을 찾을 수 없습니다. 목록을 새로고침해 주세요." };
   if (kstDateMinToMs(room.session_date, room.start_min) <= Date.now()) return { ok: false, error: "이미 시작된 방은 수정할 수 없습니다." };
 
@@ -276,6 +302,13 @@ export async function updateRoom(id: string, input: RoomInput): Promise<RoomActi
   const conflict = await findOverlappingRoom(admin, userId, v.values, id);
   if (conflict) return { ok: false, error: overlapError(conflict) };
 
+  const linked = await resolveLinkedPrepCourse(admin, userId, input.linkedPrepCourseId);
+  if (linked.error) return { ok: false, error: linked.error };
+  // 예약자가 있으면 연결 강좌도 고정 — 이미 들어온 예약자의 입장 자격이 갑자기 바뀌면 안 된다.
+  if (reserved > 0 && linked.value !== (room.linked_prep_course_id ?? null)) {
+    return { ok: false, error: "예약한 회원이 있어 연결 강좌는 변경할 수 없어요." };
+  }
+
   const { error } = await admin
     .from("friender_rooms")
     .update({
@@ -286,6 +319,8 @@ export async function updateRoom(id: string, input: RoomInput): Promise<RoomActi
       session_date: v.values.sessionDate,
       start_min: v.values.startMin,
       duration_min: v.values.durationMin,
+      access_type: linked.value ? "shouting_only" : "public",
+      linked_prep_course_id: linked.value,
     })
     .eq("id", id)
     .eq("friender_id", userId);
