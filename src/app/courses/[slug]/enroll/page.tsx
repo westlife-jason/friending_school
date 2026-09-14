@@ -15,8 +15,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return { title: course ? `${course.title} 수강신청 — 프렌딩 스쿨` : "수강신청 — 프렌딩 스쿨" };
 }
 
-export default async function EnrollPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function EnrollPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  // 러닝 탭(/learning)에서 강사를 먼저 고르고 "이 강사님께 신청" 버튼으로 넘어온 경우 사용.
+  searchParams: Promise<{ teacher?: string }>;
+}) {
   const { slug } = await params;
+  const { teacher: teacherParam } = await searchParams;
   const course = getCourse(slug);
   if (!course) notFound();
 
@@ -24,7 +32,11 @@ export default async function EnrollPage({ params }: { params: Promise<{ slug: s
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect(`/login?next=/courses/${slug}/enroll`);
+  // teacher 쿼리(러닝 탭에서 강사를 미리 고른 경우)까지 next에 담아야 로그인 후에도 선택이 유지된다.
+  if (!user) {
+    const target = teacherParam ? `/courses/${slug}/enroll?teacher=${teacherParam}` : `/courses/${slug}/enroll`;
+    redirect(`/login?next=${encodeURIComponent(target)}`);
+  }
 
   // 휴대폰 인증 + 영문 이름 가드. 휴대폰: 결과 SMS 발송에 필요 / 영문 이름: 수강신청 필수.
   const { data: profile } = await supabase.from("profiles").select("phone_verified_at, english_name").eq("id", user.id).maybeSingle();
@@ -54,6 +66,7 @@ export default async function EnrollPage({ params }: { params: Promise<{ slug: s
             coursePrice={course.price}
             teachers={teachers}
             myBusySlots={myBusySlots}
+            initialTeacherId={teacherParam ?? null}
           />
         ) : !phoneVerified ? (
           <div className="border-brand/30 bg-brand/5 mx-auto max-w-[560px] rounded-2xl border p-8 text-center">
