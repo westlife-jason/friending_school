@@ -516,6 +516,7 @@ export type Database = {
       }
       friender_rooms: {
         Row: {
+          access_type: string
           capacity: number
           created_at: string
           description: string | null
@@ -525,12 +526,14 @@ export type Database = {
           friender_nickname: string | null
           id: string
           level: string
+          linked_prep_course_id: string | null
           session_date: string
           start_min: number
           title: string
           updated_at: string
         }
         Insert: {
+          access_type?: string
           capacity: number
           created_at?: string
           description?: string | null
@@ -540,12 +543,14 @@ export type Database = {
           friender_nickname?: string | null
           id?: string
           level: string
+          linked_prep_course_id?: string | null
           session_date: string
           start_min: number
           title: string
           updated_at?: string
         }
         Update: {
+          access_type?: string
           capacity?: number
           created_at?: string
           description?: string | null
@@ -555,12 +560,21 @@ export type Database = {
           friender_nickname?: string | null
           id?: string
           level?: string
+          linked_prep_course_id?: string | null
           session_date?: string
           start_min?: number
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "friender_rooms_linked_prep_course_id_fkey"
+            columns: ["linked_prep_course_id"]
+            isOneToOne: false
+            referencedRelation: "prep_courses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notices: {
         Row: {
