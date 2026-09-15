@@ -1093,6 +1093,7 @@ export type Database = {
           gender: string | null
           id: string
           last_name: string | null
+          learning_available: boolean
           nationality: string | null
           nickname: string | null
           phone: string | null
@@ -1118,6 +1119,7 @@ export type Database = {
           gender?: string | null
           id: string
           last_name?: string | null
+          learning_available?: boolean
           nationality?: string | null
           nickname?: string | null
           phone?: string | null
@@ -1143,6 +1145,7 @@ export type Database = {
           gender?: string | null
           id?: string
           last_name?: string | null
+          learning_available?: boolean
           nationality?: string | null
           nickname?: string | null
           phone?: string | null

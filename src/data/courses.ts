@@ -4,7 +4,7 @@
 import { BOOKS, type BookUnit } from "./landing";
 import { COURSE_PRICE_LABEL, COURSE_PER_LABEL } from "./pricing";
 
-export const COURSE_SLUGS = ["workhol", "kitchen", "grammar1", "grammar2", "cosmetic", "topictalk"] as const;
+export const COURSE_SLUGS = ["workhol", "kitchen", "grammar1", "grammar2", "cosmetic"] as const;
 export type CourseSlug = (typeof COURSE_SLUGS)[number];
 
 export type SpecItem = { key: string; val: string };
@@ -394,79 +394,6 @@ const COURSES: Record<CourseSlug, Course> = {
     curriculumBooks: [{ bookKey: "cosmetic" }],
     applyTitle: "뷰티 수출영어 1:1 화상수업",
     applyHeading: ["버벅거리는 순간이 오기 전에", "제대로 준비하세요"],
-    applyOptions: SIMPLE_OPTIONS,
-  },
-
-  topictalk: {
-    slug: "topictalk",
-    title: "주제토론 과정",
-    englishTitle: "Topic Talk",
-    // TODO: 전용 히어로 이미지 준비 전까지 임시로 회화 기초문법 이미지를 재사용.
-    heroImage: "/images/course-basic1.jpg",
-    tagline: "정해진 문법 없이, 매일 다른 주제로 자유롭게",
-    introTitle: "머릿속 영어를 입 밖으로",
-    introDesc: ["문법 공부는 끝냈는데", "정작 자유롭게 말하는 연습은", "해본 적이 없다면, 지금 시작하세요."],
-    // 다른 과정과 달리 정해진 텍스트 교재가 없다 — 매 회 강사가 새 주제를 던지는 자유회화라 "교재" 항목만 교체.
-    spec: COMMON_SPEC("주제토론 과정").map((s) => (s.key === "교재" ? { key: "교재", val: "자유 주제 카드 (별도 텍스트 교재 없음)" } : s)),
-    price: COURSE_PRICE_LABEL,
-    per: COURSE_PER_LABEL,
-    regretHeadLead: "문법만 공부했던 분들이",
-    regretHeadEm: "가장 많이 하는 후회",
-    regret: [
-      {
-        num: "01",
-        title: "문법은 아는데, 자유롭게 말하는 건 처음이에요",
-        desc: "정해진 지문·예문은 읽을 수 있는데, 막상 내 생각을 자유롭게 말하려니 머리가 하얘져요. 시험 영어와 실전 대화는 완전히 다른 근육이었어요.",
-      },
-      {
-        num: "02",
-        title: "할 말은 있는데 문장으로 안 나와요",
-        desc: "속으로는 하고 싶은 말이 많은데 입으로 꺼내려면 버벅거려요. 머릿속 한국어를 영어로 옮기는 연습을 실제로 해본 적이 없었어요.",
-      },
-      {
-        num: "03",
-        title: "혼자 연습하니 늘 같은 표현만 써요",
-        desc: "앱으로 혼자 말하기 연습을 해봤지만 아는 표현만 반복하게 됐어요. 새로운 주제로 계속 찔러주는 상대가 없으면 실력이 제자리였어요.",
-      },
-    ],
-    diffHeadLead: "주제토론 과정",
-    diffHeadEm: "이렇게 달라요",
-    diff: [
-      {
-        title: "정답이 없는 대화라 실전과 똑같습니다.",
-        desc: "교재를 읽는 게 아니라 강사가 매 회 새로운 주제를 던지고, 그 자리에서 생각해서 답합니다. 실제 대화에서 겪는 순발력을 그대로 연습합니다.",
-      },
-      {
-        title: "24개 주제로 일상 회화를 골고루 커버합니다.",
-        desc: "자기소개부터 여행, 가치관, 시사 이슈까지 — 어떤 자리에서도 막히지 않도록 다양한 주제를 순서대로 다룹니다.",
-      },
-      {
-        title: "부족한 표현은 그 자리에서 교정받습니다.",
-        desc: "말하다 막히거나 어색한 표현이 나오면 강사가 바로 자연스러운 표현으로 바꿔줍니다. 대화 흐름을 끊지 않으면서 실력이 쌓입니다.",
-      },
-    ],
-    reviewHeadLead: "주제토론 수강생들의 ",
-    reviewHeadEm: "반응",
-    reviews: [
-      {
-        text: "“문법 강의만 듣다가 이 과정을 하니까 진짜 대화가 뭔지 알겠더라고요. 매번 다른 주제라 지루할 틈이 없어요.”",
-        author: "정○○",
-        role: "회화 기초문법 수료생",
-      },
-      {
-        text: "“정해진 대본이 없으니까 처음엔 당황했는데, 그게 오히려 실전 감각을 키워줬어요. 이제 낯선 사람과도 영어로 잡담할 수 있어요.”",
-        author: "한○○",
-        role: "주제토론 수강생",
-      },
-      {
-        text: "“혼자 말하기 연습은 늘 한계가 있었는데, 강사님이 계속 새 질문을 던져주니까 순발력이 확실히 늘었어요.”",
-        author: "오○○",
-        role: "직장인",
-      },
-    ],
-    curriculumBooks: [{ bookKey: "topictalk", title: "주제토론 (24개 주제)" }],
-    applyTitle: "주제토론 1:1 화상수업",
-    applyHeading: ["머릿속에서만 맴돌던 영어,", "이제 입으로 꺼내보세요"],
     applyOptions: SIMPLE_OPTIONS,
   },
 };

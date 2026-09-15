@@ -32,7 +32,6 @@ export default function EnrollWizard({
   coursePrice,
   teachers,
   myBusySlots,
-  initialTeacherId,
 }: {
   courseSlug: string;
   courseTitle: string;
@@ -40,17 +39,11 @@ export default function EnrollWizard({
   coursePrice: string;
   teachers: EnrollTeacherCard[];
   myBusySlots: Slot[];
-  // 러닝 탭(/learning)에서 강사를 먼저 고르고 넘어온 경우 — 그 강사만 보여주다가
-  // "다른 강사 보기"로 전체 목록으로 전환할 수 있다(browseAll).
-  initialTeacherId?: string | null;
 }) {
   const [step, setStep] = useState(1);
   const [slots, setSlots] = useState<Slot[]>([]);
   const [date, setDate] = useState<Date | undefined>(undefined);
-  const [teacherId, setTeacherId] = useState<string | null>(initialTeacherId ?? null);
-  const [browseAll, setBrowseAll] = useState(!initialTeacherId);
-  const preselectedTeacher = initialTeacherId ? (teachers.find((t) => t.id === initialTeacherId) ?? null) : null;
-  const candidateTeachers = browseAll || !preselectedTeacher ? teachers : [preselectedTeacher];
+  const [teacherId, setTeacherId] = useState<string | null>(null);
 
   const [state, formAction, pending] = useActionState(submitEnrollment, {} as { error?: string; success?: boolean });
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -67,10 +60,7 @@ export default function EnrollWizard({
   maxDate.setDate(maxDate.getDate() + 14);
 
   // 선택 슬롯 전부 비는 강사만 라이브 필터(관리자 finder와 동일 패턴, 추가 쿼리 0).
-  const matches = useMemo(
-    () => (slots.length === 0 ? [] : candidateTeachers.filter((t) => teacherHasAllSlots(t.slots, slots))),
-    [candidateTeachers, slots],
-  );
+  const matches = useMemo(() => (slots.length === 0 ? [] : teachers.filter((t) => teacherHasAllSlots(t.slots, slots))), [teachers, slots]);
   // 일정 변경으로 선택 강사가 매칭에서 빠지면 자동 무효(다음 버튼 비활성).
   const selectedTeacher = matches.find((t) => t.id === teacherId) ?? null;
   // 다른 학생의 진행중 신청은 애초에 강사 목록에서 차감돼 뜨지 않는다(loadEnrollTeachers). 남는 충돌은 "본인 일정"뿐 —
@@ -150,20 +140,10 @@ export default function EnrollWizard({
             </div>
 
             <div className="border-rule mt-6 border-t pt-6">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-ink text-base font-bold">{preselectedTeacher && !browseAll ? "선택한 강사" : "가능한 강사"}</h3>
-                  {slots.length > 0 && matches.length > 0 && <span className="text-muted-fg-faint text-sm">{matches.length}명</span>}
-                </div>
-                {preselectedTeacher && !browseAll && (
-                  <button type="button" onClick={() => setBrowseAll(true)} className="text-accent-blue-ink text-xs font-bold hover:underline">
-                    다른 강사 보기
-                  </button>
-                )}
+              <div className="flex items-center gap-2">
+                <h3 className="text-ink text-base font-bold">가능한 강사</h3>
+                {slots.length > 0 && matches.length > 0 && <span className="text-muted-fg-faint text-sm">{matches.length}명</span>}
               </div>
-              {preselectedTeacher && !browseAll && (
-                <p className="text-muted-fg-faint mt-1 text-xs">{preselectedTeacher.name} 강사님께 바로 신청합니다.</p>
-              )}
 
               <div className="mt-3">
                 {slots.length === 0 ? (

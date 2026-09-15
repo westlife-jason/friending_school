@@ -18,7 +18,6 @@ const COURSES = [
   { slug: "grammar1", label: "회화 기초문법 1" },
   { slug: "grammar2", label: "회화 기초문법 2" },
   { slug: "cosmetic", label: "뷰티 수출영어" },
-  { slug: "topictalk", label: "주제토론" },
 ];
 
 export default function Navbar({

@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { loadTeacherBookedSlots } from "@/lib/booking";
 import TeacherProfileForm, { type TeacherProfile } from "@/components/teacher/TeacherProfileForm";
 import AvailabilityModal from "@/components/teacher/AvailabilityModal";
+import SmallTalkToggle from "@/components/teacher/SmallTalkToggle";
 
 export default async function TeacherProfilePage() {
   const supabase = createClient(await cookies());
@@ -14,7 +15,7 @@ export default async function TeacherProfilePage() {
 
   const { data } = await supabase
     .from("profiles")
-    .select("first_name, last_name, avatar_url, zoom_url, bio, experience, phone, nationality, gender, center_id")
+    .select("first_name, last_name, avatar_url, zoom_url, bio, experience, phone, nationality, gender, center_id, learning_available")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -46,6 +47,8 @@ export default async function TeacherProfilePage() {
   return (
     <>
       <TeacherProfileForm userId={user.id} email={user.email ?? ""} initial={initial} centers={centers} />
+      {/* 러닝 탭 "스몰톡" — 실시간 가능 토글(주간 시간표와 별개) */}
+      <SmallTalkToggle initialAvailable={!!(profile as { learning_available?: boolean }).learning_available} />
       {/* 주간 가능 시간 — 요약 카드 + 모달 편집 */}
       <AvailabilityModal initialSlots={initialSlots} bookedSlots={bookedSlots} />
     </>

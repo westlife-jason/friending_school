@@ -64,6 +64,32 @@ export async function updateTeacherProfile(_prev: TeacherActionState, formData: 
   return { ok: true };
 }
 
+/* ===== 스몰톡(러닝 탭) 실시간 가능 토글 ===== */
+// 주간 시간표(teacher_availability)와 별개 — "지금 바로 가능"을 켜두면 /learning에 뜨고,
+// 학생이 입장하는 순간 자동으로 꺼진다(enterSmallTalk, src/app/learning/actions.ts).
+
+export async function setLearningAvailable(available: boolean): Promise<TeacherActionState> {
+  const userId = await requireTeacher();
+  if (!userId) return { error: "You don't have permission." };
+
+  const admin = createAdminClient();
+
+  // 켜려면 Zoom URL이 먼저 있어야 한다 — 없으면 학생이 입장할 곳이 없다.
+  if (available) {
+    const { data: prof } = await admin.from("profiles").select("zoom_url").eq("id", userId).maybeSingle();
+    if (!(prof as { zoom_url?: string | null } | null)?.zoom_url?.trim()) {
+      return { error: "먼저 프로필에서 Zoom URL을 등록해 주세요." };
+    }
+  }
+
+  const { error } = await admin.from("profiles").update({ learning_available: available }).eq("id", userId);
+  if (error) return { error: "Something went wrong while saving." };
+
+  revalidatePath("/teacher", "layout");
+  revalidatePath("/learning");
+  return { ok: true };
+}
+
 export type AvailabilitySlot = { day: number; min: number };
 
 // 강사 주간 가용 시간 저장 — 편집은 전체 그리드 교체(delete 후 bulk insert).

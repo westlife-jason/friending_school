@@ -521,44 +521,6 @@ export const BOOKS: Book[] = [
     ],
     exLabel: "유닛 전체 보기 (16개 더)",
   },
-  // 주제토론 과정(러닝 탭) 커리큘럼 — 정해진 문법이 아니라 매 회 다른 주제로 자유롭게 말하는
-  // 회화 연습이라 텍스트 교재가 없다. getCurriculumGroups가 unit 카드 표시에만 이 데이터를 쓰고,
-  // TAB_LABELS·LINKED_COURSE·TEXTBOOK_REGISTRY에는 등록하지 않는다(무료 교재 미리보기 대상 아님).
-  {
-    key: "topictalk",
-    title: "주제토론",
-    copy: "매일 다른 주제로 자유롭게 말하는 연습",
-    tags: [{ t: "24회" }],
-    units: [
-      { n: "Unit 01", t: "Self Introduction", sub: "나를 소개하기", s: "" },
-      { n: "Unit 02", t: "Hobbies & Free Time", sub: "취미와 여가", s: "" },
-      { n: "Unit 03", t: "Family & Friends", sub: "가족과 친구", s: "" },
-      { n: "Unit 04", t: "Food & Cooking", sub: "음식과 요리", s: "" },
-      { n: "Unit 05", t: "Travel Experiences", sub: "여행 경험", s: "" },
-      { n: "Unit 06", t: "Movies & TV Shows", sub: "영화와 드라마", s: "" },
-      { n: "Unit 07", t: "Weekend Plans", sub: "주말 계획", s: "" },
-      { n: "Unit 08", t: "Weather & Seasons", sub: "날씨와 계절", s: "" },
-    ],
-    extra: [
-      { n: "Unit 09", t: "School & Work Life", sub: "학교와 직장 생활", s: "" },
-      { n: "Unit 10", t: "Health & Exercise", sub: "건강과 운동", s: "" },
-      { n: "Unit 11", t: "Shopping Habits", sub: "쇼핑 습관", s: "" },
-      { n: "Unit 12", t: "Music & Art", sub: "음악과 예술", s: "" },
-      { n: "Unit 13", t: "Technology in Daily Life", sub: "일상 속 기술", s: "" },
-      { n: "Unit 14", t: "Social Media", sub: "소셜 미디어", s: "" },
-      { n: "Unit 15", t: "Culture Shock", sub: "문화 차이", s: "" },
-      { n: "Unit 16", t: "Dream Job", sub: "꿈의 직업", s: "" },
-      { n: "Unit 17", t: "Money & Saving", sub: "돈과 저축", s: "" },
-      { n: "Unit 18", t: "Environment & Recycling", sub: "환경과 재활용", s: "" },
-      { n: "Unit 19", t: "Books & Reading", sub: "책과 독서", s: "" },
-      { n: "Unit 20", t: "Pets & Animals", sub: "반려동물과 동물", s: "" },
-      { n: "Unit 21", t: "Future Plans", sub: "미래 계획", s: "" },
-      { n: "Unit 22", t: "Memorable Experiences", sub: "기억에 남는 경험", s: "" },
-      { n: "Unit 23", t: "Giving Opinions", sub: "의견 말하기", s: "" },
-      { n: "Unit 24", t: "Free Talk", sub: "자유 주제", s: "" },
-    ],
-    exLabel: "유닛 전체 보기 (16개 더)",
-  },
 ];
 
 /* ===== 호주 현지생존기 — 유튜브 영상 ===== */
