@@ -15,6 +15,7 @@ import { joinRoom, leaveRoom } from "@/app/friending/actions";
 import EnterRoomButton from "@/components/friending/EnterRoomButton";
 import HostProfileModal from "@/components/friending/HostProfileModal";
 import RoomInfoModal from "@/components/friending/RoomInfoModal";
+import RoomBoardModal from "@/components/friending/RoomBoardModal";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,6 +42,7 @@ export type HostProfile = {
 
 export type PublicRoom = {
   id: string;
+  roomId: string; // 시리즈 id(회차 id인 id와 다름) — 게시판은 회차가 아니라 방 단위로 하나다.
   frienderId: string;
   fallbackName: string; // hosts 조회 실패 시 쓰는 방 행의 이름 스냅샷
   isMine: boolean;
@@ -98,6 +100,7 @@ export default function FriendingRooms({
   const [leaveTarget, setLeaveTarget] = useState<PublicRoom | null>(null);
   const [hostTarget, setHostTarget] = useState<HostProfile | null>(null);
   const [infoTarget, setInfoTarget] = useState<string | null>(null);
+  const [boardTarget, setBoardTarget] = useState<{ roomId: string; roomTitle: string } | null>(null);
 
   // 1분 틱 — 진행 중/입장창 상태를 시간에 따라 갱신.
   const [now, setNow] = useState(() => Date.now());
@@ -208,6 +211,7 @@ export default function FriendingRooms({
                   isLoggedIn={isLoggedIn}
                   onOpenHost={setHostTarget}
                   onOpenInfo={setInfoTarget}
+                  onOpenBoard={() => setBoardTarget({ roomId: r.roomId, roomTitle: r.title })}
                   enterable={canEnter(r)}
                   noShow={noShowOf(r)}
                   busy={pending && pendingId === r.id}
@@ -235,6 +239,9 @@ export default function FriendingRooms({
 
       {/* 방 소개 전문 */}
       <RoomInfoModal description={infoTarget} onClose={() => setInfoTarget(null)} />
+
+      {/* 게시판 — 방(시리즈) 단위, 프렌더와 참가한 프렌디만 쓸 수 있다(읽기는 누구나). */}
+      <RoomBoardModal target={boardTarget} isLoggedIn={isLoggedIn} onClose={() => setBoardTarget(null)} />
 
       {/* 예약 확인 — 카드에서 바로 실행되던 것을 한 단계 거치게 한다. */}
       <AlertDialog open={joinTarget !== null} onOpenChange={(open) => !open && setJoinTarget(null)}>
@@ -317,6 +324,7 @@ function RoomCard({
   onLeave,
   onOpenHost,
   onOpenInfo,
+  onOpenBoard,
 }: {
   room: PublicRoom;
   host: HostProfile;
@@ -329,6 +337,7 @@ function RoomCard({
   onLeave: () => void;
   onOpenHost: (host: HostProfile) => void;
   onOpenInfo: (description: string) => void;
+  onOpenBoard: () => void;
 }) {
   const full = room.participants >= room.capacity;
   const pill = "shrink-0 rounded-full px-4 py-2 text-sm font-bold transition-colors disabled:opacity-60";
@@ -388,8 +397,8 @@ function RoomCard({
           )}
         </p>
 
-        {/* 소개는 모달로 — 문단을 조건부로 렌더하면 카드마다 CTA 높이가 달라진다(버튼은 항상 렌더, 소개 없으면 비활성). */}
-        <div className="mt-1.5">
+        {/* 소개·게시판은 모달로 — 문단을 조건부로 렌더하면 카드마다 CTA 높이가 달라진다(버튼은 항상 렌더, 소개 없으면 비활성). */}
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5">
           <button
             type="button"
             disabled={!description}
@@ -401,6 +410,13 @@ function RoomCard({
               description ? "text-accent-blue-ink hover:underline" : "text-muted-fg-faint/60 cursor-default",
             )}>
             <ChevronRight aria-hidden className="size-3" />방 소개글 보기
+          </button>
+          <button
+            type="button"
+            aria-haspopup="dialog"
+            onClick={onOpenBoard}
+            className="focus-visible:ring-accent-blue/50 text-accent-blue-ink inline-flex items-center gap-0.5 rounded text-xs font-bold transition-colors hover:underline focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
+            <ChevronRight aria-hidden className="size-3" />게시판
           </button>
         </div>
 

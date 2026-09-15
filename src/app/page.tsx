@@ -132,6 +132,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ r
 
   const rooms: PublicRoom[] = rows.map((r) => ({
     id: r.occurrenceId,
+    roomId: r.room.id, // 시리즈 id — 게시판은 회차가 아니라 방 단위로 하나다.
     frienderId: r.room.friender_id,
     // 프로필 조회가 실패했거나 방금 탈퇴한 경우를 대비한 폴백 — 방 행의 이름 스냅샷을 쓴다.
     fallbackName: r.room.friender_nickname?.trim() || r.room.friender_name?.trim() || "프렌더",
