@@ -11,6 +11,19 @@ export type Moment = {
 
 export const MOMENTS: Moment[] = [
   {
+    label: "수원 화성 하이킹",
+    date: "10.10",
+    content:
+      "10월 10일, 외국인 친구들과 함께 수원 화성 성곽길을 걸어요! 화서문·장안문 등 주요 명소를 둘러보며 영어로 편하게 대화 나눌 예정입니다. 편한 신발 챙겨오세요 :)",
+    // 앞 2장은 실제 답사 사진, 뒤 2장은 위키미디어 커먼즈 자유이용 사진(출처: Bernard Gagnon, CC0 / Craig Wyzik, CC BY 2.0).
+    imgs: [
+      "/images/activity-hwaseong-1.jpg",
+      "/images/activity-hwaseong-2.jpg",
+      "/images/activity-hwaseong-wiki-1.jpg",
+      "/images/activity-hwaseong-wiki-2.jpg",
+    ],
+  },
+  {
     label: "대한대학교 특강",
     date: "07.10",
     content:

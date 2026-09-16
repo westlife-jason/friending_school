@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_applications: {
+        Row: {
+          activity_slug: string
+          created_at: string
+          id: string
+          user_id: string
+          user_name: string
+        }
+        Insert: {
+          activity_slug: string
+          created_at?: string
+          id?: string
+          user_id: string
+          user_name: string
+        }
+        Update: {
+          activity_slug?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+          user_name?: string
+        }
+        Relationships: []
+      }
       center_settlements: {
         Row: {
           adjustments: Json

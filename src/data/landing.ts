@@ -633,25 +633,52 @@ export const COURSE_CARDS: CourseCard[] = [
 
 /* ===== 원어민 · 세대교감 액티비티 ===== */
 
+export type ActivityDetail = {
+  images: string[];
+  when: string; // "10월 10일(토) 오전 10시" — 세부정보 모달용 완전한 일시.
+  meetPoint: string;
+  notes: string[];
+};
+
 export type Activity = {
+  /** activity_applications.activity_slug와 매칭되는 안정적 식별자 — title은 카피 수정에 흔들리니 따로 둔다. */
+  slug: string;
   title: string;
   desc: string;
   date: string;
+  /** 구체적으로 확정된 다음 일정이 있을 때만 true — 카드에서 눈에 띄게 강조한다("항상 진행 중" 문구와는 대비 필요). */
+  dateHighlight?: boolean;
   badge: string;
   badgeVariant: "open" | "plan" | "new";
   image: string;
+  /** 있으면 카드에 "세부정보 보기" 버튼이 뜨고, 눌렀을 때 이 내용 + 참가 신청 폼을 보여준다. */
+  detail?: ActivityDetail;
 };
 
 export const ACTIVITIES: Activity[] = [
   {
+    slug: "hiking-hwaseong-1010",
     title: "외국인과 함께하는 하이킹",
     desc: "원어민 참가자, 줌마분들과 함께 영어로 대화하며 가는 하이킹. 무료 참여 가능하시고요. 즐거운 시간을 많이 많이 보내고 있답니다. 건강도 챙기고 영어도 하고!",
-    date: "일정 공지",
+    date: "다음 일정: 10월 10일 · 수원 화성",
+    dateHighlight: true,
     badge: "상시진행",
     badgeVariant: "open",
-    image: "/images/activity-hiking.jpg",
+    image: "/images/activity-hwaseong-1.jpg",
+    detail: {
+      images: [
+        "/images/activity-hwaseong-1.jpg",
+        "/images/activity-hwaseong-2.jpg",
+        "/images/activity-hwaseong-wiki-1.jpg",
+        "/images/activity-hwaseong-wiki-2.jpg",
+      ],
+      when: "10월 10일(토) 오전 10시",
+      meetPoint: "수원 화성 팔달문 앞 광장",
+      notes: ["편한 신발과 물을 챙겨주세요.", "성곽길을 따라 약 2~3시간 함께 걸어요.", "우천 시 일정이 변경될 수 있어요."],
+    },
   },
   {
+    slug: "australia-speaking-tour-2027",
     title: "27년 호주 스피킹 투어",
     desc: "호주 퍼스에서 단기 어학연수 및 현지 여행. 아카데미에서 단기연수도 하고, 해변파티, 주요관광지에서 관광도 해요. 홈스테이를 통해서 현지를 느낄 수 있어요. 2018년 퍼스, 2019년 유럽, 2025년 퍼스 스피킹 투어를 진행했어요.",
     date: "2027년 1월 예정",
