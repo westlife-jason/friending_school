@@ -25,7 +25,6 @@ export default function ActivitiesPage() {
           <div className="px-5 py-8 text-center md:px-16">
             <p className="text-[12px] font-bold text-white/95 md:text-[15px]">{label}</p>
             <h1 className="mt-1.5 text-[22px] font-bold tracking-[-0.04em] text-white md:mt-2 md:text-[34px]">{title}</h1>
-            <p className="mx-auto mt-2 max-w-[520px] text-sm text-white/80">{lead}</p>
 
             <ul className="mt-4 flex list-none flex-wrap justify-center gap-2">
               {points.map((p) => (
@@ -40,8 +39,11 @@ export default function ActivitiesPage() {
         </section>
       </div>
 
-      {/* 액티비티 카드 — /school 5번 섹션과 동일 컴포넌트 */}
-      <ActivitySection />
+      {/* 액티비티 카드 — /school 5번 섹션과 동일 컴포넌트. 히어로에 있던 리드 문구를
+          "원어민 · 세대교감" 섹션 인트로로 옮겨와 이 섹션의 기본 문구를 대체한다(사용자 피드백).
+          SectionIntro의 h2는 32px 대형 타이틀용이라, 문장형 리드에는 너무 커 보여서
+          카드 제목("외국인과 함께하는 하이킹")과 같은 크기(text-base)로 오버라이드한다. */}
+      <ActivitySection introTitle={<span className="text-ink text-base font-bold tracking-normal">{lead}</span>} introDesc={null} />
 
       {/* 아웃팅 모먼츠 — 지난 특강·모임 아카이브(4탭 리뉴얼 2단계 신규) */}
       <MomentsSection />

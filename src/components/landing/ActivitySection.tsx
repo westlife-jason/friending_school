@@ -17,12 +17,23 @@ const ACTIVITY_BADGE: Record<string, string> = {
 // 원어민 · 세대교감 액티비티 — /school 5번 섹션과 /activities에서 공유. 카드 데이터는 landing.ts의 ACTIVITIES 단일 소스.
 // ⚠️ 라벨에서 "액티비티"를 뺐다 — /activities 페이지 H1이 이미 "액티비티"라 라벨까지 반복하면
 //    같은 단어가 페이지 안에서 두 번 겹쳐 보인다(사용자 피드백).
-export default function ActivitySection({ id, className }: { id?: string; className?: string }) {
+export default function ActivitySection({
+  id,
+  className,
+  introTitle = "영어는 밖에서도 빨리 늘어요!",
+  introDesc = "국내에서도 많은 활동이 있어요. 함께해요.",
+}: {
+  id?: string;
+  className?: string;
+  /** /activities는 히어로 리드 문구를 여기로 옮겨와 오버라이드한다 — 기본값은 /school 5번 섹션용. */
+  introTitle?: React.ReactNode;
+  introDesc?: React.ReactNode;
+}) {
   const [detailTarget, setDetailTarget] = useState<Activity | null>(null);
 
   return (
     <section id={id} className={cn("pb-14", className)}>
-      <SectionIntro label="원어민 · 세대교감" title="영어는 밖에서도 빨리 늘어요!" desc="국내에서도 많은 활동이 있어요. 함께해요." />
+      <SectionIntro label="원어민 · 세대교감" title={introTitle} desc={introDesc} />
       <div className="mx-auto max-w-[1200px] px-5 md:px-10">
         <div className="flex flex-col gap-3.5 md:flex-row md:flex-wrap md:justify-center">
           {ACTIVITIES.map((a) => (
