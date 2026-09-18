@@ -44,11 +44,12 @@ export default function ActivitySection({ id, className }: { id?: string; classN
                 <p className="text-ink mb-1.5 text-base font-bold">{a.title}</p>
                 <p className="text-muted-fg mb-3 text-[15px] leading-relaxed">{a.desc}</p>
                 <div className="flex items-center justify-between gap-2">
-                  {/* 확정된 다음 일정은 눈에 띄게 — 막연한 "상시진행" 문구와 같은 회색이면 묻힌다(사용자 피드백). */}
+                  {/* 확정된 다음 일정은 눈에 띄게 — 막연한 "상시진행" 문구와 같은 회색이면 묻힌다(사용자 피드백).
+                      완전히 사라지는 하드 블링크 대신 opacity가 100%↔50%로 오가는 pulse — 가독성 유지. */}
                   <span
                     className={cn(
                       "flex items-center gap-1 text-sm",
-                      a.dateHighlight ? "text-brand font-bold" : "text-muted-fg-faint",
+                      a.dateHighlight ? "text-brand motion-safe:animate-pulse font-bold" : "text-muted-fg-faint",
                     )}>
                     <Calendar aria-hidden className="size-3.5" /> {a.date}
                   </span>
