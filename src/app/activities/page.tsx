@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import ActivitySection from "@/components/landing/ActivitySection";
 import MomentsSection from "@/components/landing/MomentsSection";
+import HeroBubbles from "@/components/HeroBubbles";
 import { ACTIVITIES_HERO } from "@/data/activities-page";
 
 export const metadata: Metadata = { title: "액티비티 — 프렌딩 스쿨" };
@@ -12,20 +14,31 @@ export default function ActivitiesPage() {
 
   return (
     <div className="bg-surface">
-      {/* 히어로 */}
-      <section className="mx-auto max-w-[1200px] px-5 pt-12 pb-8 text-center md:px-10 md:pt-16 md:pb-10">
-        <span className="bg-brand-gradient mb-2 inline-block rounded-full px-6 py-1.5 text-base font-bold text-white md:text-xl">{label}</span>
-        <h1 className="text-ink mt-1 mb-3 text-[26px] leading-snug font-bold tracking-tight md:text-[40px]">{title}</h1>
-        <p className="text-muted-fg mx-auto max-w-[620px] text-[15px] leading-relaxed md:text-base">{lead}</p>
+      <div className="mx-auto max-w-[1100px] px-5 pt-8 md:pt-12">
+        {/* 히어로 — 홈(/)·샤우팅·러닝과 같은 스켈레톤(사진 + 어두운 오버레이 + 가운데 카피).
+            사진은 페이지 제목("교실 밖에서")에 맞춰 실제 하이킹 사진으로 골랐다. */}
+        <section className="relative isolate flex min-h-[140px] items-center justify-center overflow-hidden rounded-2xl md:min-h-[190px]">
+          <Image src="/images/activity-hwaseong-1.jpg" alt="" fill sizes="(max-width: 1100px) 100vw, 1100px" priority className="-z-10 object-cover" />
+          <div aria-hidden className="absolute inset-0 -z-10 bg-black/45" />
+          <HeroBubbles className="pointer-events-none absolute inset-0 -z-10 hidden h-full w-full md:block" />
 
-        <ul className="mt-6 flex list-none flex-wrap justify-center gap-2">
-          {points.map((p) => (
-            <li key={p} className="border-rule bg-accent-blue-soft text-accent-blue-ink rounded-full border px-4 py-1.5 text-sm font-semibold">
-              {p}
-            </li>
-          ))}
-        </ul>
-      </section>
+          <div className="px-5 py-8 text-center md:px-16">
+            <p className="text-[12px] font-bold text-white/95 md:text-[15px]">{label}</p>
+            <h1 className="mt-1.5 text-[22px] font-bold tracking-[-0.04em] text-white md:mt-2 md:text-[34px]">{title}</h1>
+            <p className="mx-auto mt-2 max-w-[520px] text-sm text-white/80">{lead}</p>
+
+            <ul className="mt-4 flex list-none flex-wrap justify-center gap-2">
+              {points.map((p) => (
+                <li
+                  key={p}
+                  className="rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold text-white/90 backdrop-blur-[2px]">
+                  {p}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      </div>
 
       {/* 액티비티 카드 — /school 5번 섹션과 동일 컴포넌트 */}
       <ActivitySection />
