@@ -12,7 +12,7 @@ export type AccessibleRoom = {
 };
 
 // 샤우팅 강좌를 수강확정한 학생에게 무료로 열린 "강좌 전용 연습방" 안내.
-// 예약·입장 자체는 프렌딩 홈(/)의 기존 흐름을 그대로 쓴다 — 여기서는 존재를 알려주고 링크만 준다.
+// 예약·입장 자체는 프렌딩 탭(/friending)의 기존 흐름을 그대로 쓴다 — 여기서는 존재를 알려주고 링크만 준다.
 export default function ShoutingRoomAccess({ rooms }: { rooms: AccessibleRoom[] }) {
   if (rooms.length === 0) return null;
 
@@ -33,7 +33,7 @@ export default function ShoutingRoomAccess({ rooms }: { rooms: AccessibleRoom[] 
                 {formatDateKo(r.sessionDate)} · {fmtTime(r.startMin)}~{fmtRoomEnd(r.startMin + r.durationMin)} · {r.courseTitle}
               </p>
             </div>
-            <Link href="/" className="text-accent-blue-ink shrink-0 text-sm font-bold underline underline-offset-2 hover:opacity-90">
+            <Link href="/friending" className="text-accent-blue-ink shrink-0 text-sm font-bold underline underline-offset-2 hover:opacity-90">
               프렌딩에서 예약하기
             </Link>
           </li>

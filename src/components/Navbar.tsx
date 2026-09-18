@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import { logout } from "@/app/(auth)/logout/actions";
 import { createClient } from "@/utils/supabase/client";
@@ -33,6 +34,9 @@ export default function Navbar({
   isFriender?: boolean;
   isFrienderPlus?: boolean;
 }) {
+  const pathname = usePathname();
+  const isHub = pathname === "/";
+
   const [user, setUser] = useState<NavbarUser>(initialUser);
   const [menuOpen, setMenuOpen] = useState(false);
   const [curriculumOpen, setCurriculumOpen] = useState(false);
@@ -115,29 +119,32 @@ export default function Navbar({
         </div>
 
         {/* 중앙 링크 4종(프렌딩/샤우팅/러닝/아웃팅, 로그인 무관 상시 노출) — 우측은 인증/역할 링크 전용이라 중앙에 배치.
+            허브(/)에서는 카드 4개가 이미 같은 선택지를 크게 보여주므로 중복이라 숨긴다(사용자 피드백).
             스쿨 소개(/school)는 nav에서 완전히 제외(라우트 자체의 admin 가드는 유지 — 직접 URL 접근만 가능). */}
-        <div className="hidden items-center justify-center gap-4 md:flex lg:gap-6">
-          <Link
-            href="/"
-            className="text-ink-soft hover:text-accent-blue-ink focus-visible:ring-accent-blue/50 rounded text-sm font-bold whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
-            프렌딩
-          </Link>
-          <Link
-            href="/shouting"
-            className="text-ink-soft hover:text-accent-blue-ink focus-visible:ring-accent-blue/50 rounded text-sm font-bold whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
-            샤우팅
-          </Link>
-          <Link
-            href="/learning"
-            className="text-ink-soft hover:text-accent-blue-ink focus-visible:ring-accent-blue/50 rounded text-sm font-bold whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
-            러닝
-          </Link>
-          <Link
-            href="/activities"
-            className="text-ink-soft hover:text-accent-blue-ink focus-visible:ring-accent-blue/50 rounded text-sm font-bold whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
-            아웃팅
-          </Link>
-        </div>
+        {!isHub && (
+          <div className="hidden items-center justify-center gap-4 md:flex lg:gap-6">
+            <Link
+              href="/friending"
+              className="text-ink-soft hover:text-accent-blue-ink focus-visible:ring-accent-blue/50 rounded text-sm font-bold whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
+              프렌딩
+            </Link>
+            <Link
+              href="/shouting"
+              className="text-ink-soft hover:text-accent-blue-ink focus-visible:ring-accent-blue/50 rounded text-sm font-bold whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
+              샤우팅
+            </Link>
+            <Link
+              href="/learning"
+              className="text-ink-soft hover:text-accent-blue-ink focus-visible:ring-accent-blue/50 rounded text-sm font-bold whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
+              러닝
+            </Link>
+            <Link
+              href="/activities"
+              className="text-ink-soft hover:text-accent-blue-ink focus-visible:ring-accent-blue/50 rounded text-sm font-bold whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
+              아웃팅
+            </Link>
+          </div>
+        )}
 
         <div className="flex flex-1 items-center justify-end gap-3">
           {/* 데스크톱 인라인 인증 영역 */}
@@ -249,7 +256,7 @@ export default function Navbar({
               스쿨 소개는 nav에서 완전히 제외(라우트 자체는 유지). 아코디언 아님 → 별도 state 없음 */}
           <li className="border-rule border-b py-4">
             <Link
-              href="/"
+              href="/friending"
               onClick={closeMenu}
               className="text-ink-soft hover:text-accent-blue-ink focus-visible:ring-accent-blue/50 rounded text-[15px] font-bold no-underline transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
               프렌딩
