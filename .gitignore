@@ -45,3 +45,6 @@ next-env.d.ts
 project0607/
 v9_project/
 
+# local-only dev launcher (hardcoded personal path)
+start-dev.bat
+
