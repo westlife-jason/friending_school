@@ -120,6 +120,35 @@ export default function ActivityDetailModal({ activity, onClose }: { activity: A
             </ul>
           )}
 
+          {detail.en && (
+            <div className="border-rule mt-4 border-t pt-4">
+              <p className="text-muted-fg-faint mb-2 text-xs font-bold tracking-wide uppercase">English</p>
+              <p className="text-ink text-sm leading-relaxed">{detail.en.desc}</p>
+
+              <dl className="mt-3 grid grid-cols-1 gap-2 text-sm">
+                <div className="flex gap-2">
+                  <dt className="text-muted-fg-faint w-16 shrink-0">Date</dt>
+                  <dd className="text-ink font-semibold">{detail.en.when}</dd>
+                </div>
+                <div className="flex gap-2">
+                  <dt className="text-muted-fg-faint w-16 shrink-0">Meet</dt>
+                  <dd className="text-ink flex items-center gap-1 font-semibold">
+                    <MapPin aria-hidden className="size-3.5" />
+                    {detail.en.meetPoint}
+                  </dd>
+                </div>
+              </dl>
+
+              {detail.en.notes.length > 0 && (
+                <ul className="text-muted-fg mt-3 flex flex-col gap-1 text-sm leading-relaxed">
+                  {detail.en.notes.map((n) => (
+                    <li key={n}>· {n}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+
           <p className="text-muted-fg-faint mt-4 text-xs">{loading ? "참가 인원 확인 중…" : `지금까지 ${count}명이 신청했어요.`}</p>
         </div>
 

@@ -638,6 +638,13 @@ export type ActivityDetail = {
   when: string; // "10월 10일(토) 오전 10시" — 세부정보 모달용 완전한 일시.
   meetPoint: string;
   notes: string[];
+  /** 외국인 참가자를 위한 영문 버전 — 있으면 모달에 한글 아래 별도 섹션으로 표시. */
+  en?: {
+    desc: string;
+    when: string;
+    meetPoint: string;
+    notes: string[];
+  };
 };
 
 export type Activity = {
@@ -659,7 +666,7 @@ export const ACTIVITIES: Activity[] = [
   {
     slug: "hiking-hwaseong-1010",
     title: "외국인과 함께하는 하이킹",
-    desc: "원어민 참가자, 줌마분들과 함께 영어로 대화하며 가는 하이킹. 무료 참여 가능하시고요. 즐거운 시간을 많이 많이 보내고 있답니다. 건강도 챙기고 영어도 하고!",
+    desc: "한국인과 외국인이 함께 걸으며 영어와 한국어를 나누는 아웃팅. 이번엔 수원 화성을 걸으며 정조대왕 이야기와 화성의 역사·문화를 재미있게 알아봐요.",
     date: "다음 일정: 10월 10일 · 수원 화성",
     dateHighlight: true,
     badge: "상시진행",
@@ -672,9 +679,25 @@ export const ACTIVITIES: Activity[] = [
         "/images/activity-hwaseong-wiki-1.jpg",
         "/images/activity-hwaseong-wiki-2.jpg",
       ],
-      when: "10월 10일(토) 오전 10시",
-      meetPoint: "수원 화성 팔달문 앞 광장",
-      notes: ["편한 신발과 물을 챙겨주세요.", "성곽길을 따라 약 2~3시간 함께 걸어요.", "우천 시 일정이 변경될 수 있어요."],
+      when: "2026년 10월 10일(토) 오전 10시 ~ 오후 3시",
+      meetPoint: "수원 장안문",
+      notes: [
+        "일정: 장안문 → 화서문 → 팔달산 → 화성행궁 → 점심 → 커피챗",
+        "점심 식사 후 커피챗에서 한국인·외국인이 함께 영어와 한국어를 자유롭게 연습해요.",
+        "장안문은 지하철역에서 조금 떨어져 있어 버스 이용을 추천해요.",
+        "편한 신발과 물을 챙겨주세요.",
+      ],
+      en: {
+        desc: "Join Koreans and foreigners for a fun walk through Suwon Hwaseong, exchanging English and Korean while learning about King Jeongjo and the fortress's history.",
+        when: "Saturday, October 10, 2026 · 10:00 AM – 3:00 PM",
+        meetPoint: "Janganmun Gate, Suwon",
+        notes: [
+          "Itinerary: Janganmun → Hwaseomun → Paldalsan → Hwaseong Haenggung → Lunch → Coffee Chat",
+          "After lunch, enjoy a relaxed Korean-English language exchange over coffee.",
+          "Janganmun is a bit far from the subway, so taking a bus is recommended.",
+          "Wear comfortable shoes and bring water.",
+        ],
+      },
     },
   },
   {
