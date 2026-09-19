@@ -12,6 +12,53 @@ import { TEXTBOOKS } from "@/data/textbook";
 
 type NavbarUser = { email?: string | null } | null;
 
+const NAV_TABS = [
+  { href: "/friending", label: "프렌딩" },
+  { href: "/shouting", label: "샤우팅" },
+  { href: "/learning", label: "러닝" },
+  { href: "/activities", label: "아웃팅" },
+];
+
+const isTabActive = (pathname: string, href: string) => pathname === href || pathname.startsWith(`${href}/`);
+
+// 4탭 링크 — 현재 열린 탭은 브랜드 그라디언트(블루→핑크, 로고와 같은 색) 밑줄로 표시하고,
+// 나머지는 hover 시 같은 밑줄이 왼쪽에서 그려진다. 탭마다 색을 달리하면 각 탭 히어로 사진과 색이 부딪혀
+// 산만해지므로 브랜드 단색 하나로 통일했다(사용자가 전문가 판단에 위임).
+function NavTabLink({
+  href,
+  label,
+  active,
+  className,
+  onClick,
+}: {
+  href: string;
+  label: string;
+  active: boolean;
+  className?: string;
+  onClick?: () => void;
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "group focus-visible:ring-accent-blue/50 relative inline-block rounded font-bold whitespace-nowrap no-underline transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+        active ? "text-ink" : "text-ink-soft hover:text-accent-blue-ink",
+        className,
+      )}>
+      {label}
+      <span
+        aria-hidden
+        className={cn(
+          "bg-brand-gradient absolute inset-x-0 -bottom-1.5 h-[3px] origin-left rounded-full transition-transform duration-200",
+          active ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100",
+        )}
+      />
+    </Link>
+  );
+}
+
 // 커리큘럼(과정) 링크 — Phase 2 과정 상세페이지(/courses/<slug>) placeholder.
 const COURSES = [
   { slug: "workhol", label: "워홀 생존영어" },
@@ -123,26 +170,9 @@ export default function Navbar({
             스쿨 소개(/school)는 nav에서 완전히 제외(라우트 자체의 admin 가드는 유지 — 직접 URL 접근만 가능). */}
         {!isHub && (
           <div className="hidden items-center justify-center gap-4 md:flex lg:gap-6">
-            <Link
-              href="/friending"
-              className="text-ink-soft hover:text-accent-blue-ink focus-visible:ring-accent-blue/50 rounded text-sm font-bold whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
-              프렌딩
-            </Link>
-            <Link
-              href="/shouting"
-              className="text-ink-soft hover:text-accent-blue-ink focus-visible:ring-accent-blue/50 rounded text-sm font-bold whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
-              샤우팅
-            </Link>
-            <Link
-              href="/learning"
-              className="text-ink-soft hover:text-accent-blue-ink focus-visible:ring-accent-blue/50 rounded text-sm font-bold whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
-              러닝
-            </Link>
-            <Link
-              href="/activities"
-              className="text-ink-soft hover:text-accent-blue-ink focus-visible:ring-accent-blue/50 rounded text-sm font-bold whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
-              아웃팅
-            </Link>
+            {NAV_TABS.map((tab) => (
+              <NavTabLink key={tab.href} href={tab.href} label={tab.label} active={isTabActive(pathname, tab.href)} className="text-sm" />
+            ))}
           </div>
         )}
 
@@ -254,38 +284,11 @@ export default function Navbar({
         <ul className="list-none px-6">
           {/* 상단 flat 링크 — 데스크톱 중앙 링크와 순서·노출 조건 동일(프렌딩→샤우팅→러닝→아웃팅).
               스쿨 소개는 nav에서 완전히 제외(라우트 자체는 유지). 아코디언 아님 → 별도 state 없음 */}
-          <li className="border-rule border-b py-4">
-            <Link
-              href="/friending"
-              onClick={closeMenu}
-              className="text-ink-soft hover:text-accent-blue-ink focus-visible:ring-accent-blue/50 rounded text-[15px] font-bold no-underline transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
-              프렌딩
-            </Link>
-          </li>
-          <li className="border-rule border-b py-4">
-            <Link
-              href="/shouting"
-              onClick={closeMenu}
-              className="text-ink-soft hover:text-accent-blue-ink focus-visible:ring-accent-blue/50 rounded text-[15px] font-bold no-underline transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
-              샤우팅
-            </Link>
-          </li>
-          <li className="border-rule border-b py-4">
-            <Link
-              href="/learning"
-              onClick={closeMenu}
-              className="text-ink-soft hover:text-accent-blue-ink focus-visible:ring-accent-blue/50 rounded text-[15px] font-bold no-underline transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
-              러닝
-            </Link>
-          </li>
-          <li className="border-rule border-b py-4">
-            <Link
-              href="/activities"
-              onClick={closeMenu}
-              className="text-ink-soft hover:text-accent-blue-ink focus-visible:ring-accent-blue/50 rounded text-[15px] font-bold no-underline transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
-              아웃팅
-            </Link>
-          </li>
+          {NAV_TABS.map((tab) => (
+            <li key={tab.href} className="border-rule border-b py-4">
+              <NavTabLink href={tab.href} label={tab.label} active={isTabActive(pathname, tab.href)} onClick={closeMenu} className="text-[15px]" />
+            </li>
+          ))}
           {/* 커리큘럼 아코디언 */}
           <li className="border-rule border-b py-4">
             <button
