@@ -7,7 +7,6 @@ import { todayKst } from "@/lib/booking";
 import { kstDateMinToMs } from "@/lib/classtime";
 import { seatHeld } from "@/lib/room-time";
 import SuccessBanner from "@/components/SuccessBanner";
-import HeroBubbles from "@/components/HeroBubbles";
 import FriendingRooms, { type HostProfile, type PublicRoom } from "@/components/friending/FriendingRooms";
 
 export const metadata: Metadata = { title: "프렌딩 — 프렌딩 스쿨" };
@@ -165,8 +164,6 @@ export default async function FriendingPage({ searchParams }: { searchParams: Pr
         <section className="relative isolate flex min-h-[140px] items-center justify-center overflow-hidden rounded-2xl md:min-h-[190px]">
           <Image src="/images/friending-hero.jpg" alt="" fill sizes="(max-width: 1100px) 100vw, 1100px" priority className="-z-10 object-cover" />
           <div aria-hidden className="absolute inset-0 -z-10 bg-black/45" />
-          {/* 말풍선 장식 — 목업 SVG 이식. 샤우팅 배너 히어로와 공용(`HeroBubbles`). */}
-          <HeroBubbles className="pointer-events-none absolute inset-0 -z-10 hidden h-full w-full md:block" />
 
           <div className="px-5 py-8 text-center md:px-16">
             <p className="text-[12px] font-bold text-white/95 md:text-[15px]">친구와 친구가 만나 배우는, 프렌딩 스쿨</p>

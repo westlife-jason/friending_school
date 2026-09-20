@@ -13,7 +13,6 @@ import { fmtDateKo, formatWon, isPrepApplyOpen } from "@/lib/prep";
 import { PREP_APPLY_WINDOW_LABEL, PREP_PAYMENT_DEADLINE_MSG, PREP_SESSION_COUNT } from "@/data/prep";
 import { roomLevelLabelKo } from "@/data/room-levels";
 import { applyPrepCourse, cancelPrepEnrollment } from "@/app/prep/enroll-actions";
-import HeroBubbles from "@/components/HeroBubbles";
 import PrepCourseDetailModal from "@/components/prep/PrepCourseDetailModal";
 import { gradientOf, hostLabel, isOngoing, periodLabel, priceLabel, type OpenPrepCourse } from "@/components/prep/course-display";
 import type { HostProfile } from "@/components/friending/FriendingRooms";
@@ -118,7 +117,6 @@ export default function PrepEnrollBanner({
         {/* 강좌가 있으면 이 히어로가 홈 첫 화면 LCP다 → priority. bg-[#1b2450]은 로드 전/실패 시 대체 배경. */}
         <Image src="/images/hero-shouting.jpg" alt="" fill sizes="(max-width: 1100px) 100vw, 1100px" priority className="-z-10 object-cover" />
         <div aria-hidden className="absolute inset-0 -z-10 bg-black/45" />
-        <HeroBubbles className="pointer-events-none absolute inset-0 -z-10 hidden h-full w-full md:block" />
 
         <div className="px-5 py-8 text-center md:px-16">
           <p className="text-[12px] font-bold text-white/95 md:text-[15px]">매일 함께 외치는, 샤우팅</p>

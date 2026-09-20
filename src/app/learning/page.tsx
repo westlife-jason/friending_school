@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { loadAvailableTeachers } from "@/app/learning/actions";
 import SmallTalkBrowser from "@/components/learning/SmallTalkBrowser";
-import HeroBubbles from "@/components/HeroBubbles";
 
 export const metadata: Metadata = { title: "러닝 — 프렌딩 스쿨" };
 
@@ -19,7 +18,6 @@ export default async function LearningPage() {
         <section className="relative isolate flex min-h-[140px] items-center justify-center overflow-hidden rounded-2xl md:min-h-[190px]">
           <Image src="/images/learning-hero.jpg" alt="" fill sizes="(max-width: 1100px) 100vw, 1100px" priority className="-z-10 object-cover" />
           <div aria-hidden className="absolute inset-0 -z-10 bg-black/45" />
-          <HeroBubbles className="pointer-events-none absolute inset-0 -z-10 hidden h-full w-full md:block" />
 
           <div className="px-5 py-8 text-center md:px-16">
             <p className="text-[12px] font-bold text-white/95 md:text-[15px]">예약 없이 바로 연결되는, 러닝</p>

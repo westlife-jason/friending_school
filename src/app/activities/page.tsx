@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import ActivitySection from "@/components/landing/ActivitySection";
 import MomentsSection from "@/components/landing/MomentsSection";
-import HeroBubbles from "@/components/HeroBubbles";
 import { ACTIVITIES_HERO } from "@/data/activities-page";
 
 export const metadata: Metadata = { title: "액티비티 — 프렌딩 스쿨" };
@@ -20,7 +19,6 @@ export default function ActivitiesPage() {
         <section className="relative isolate flex min-h-[140px] items-center justify-center overflow-hidden rounded-2xl md:min-h-[190px]">
           <Image src="/images/activity-hwaseong-1.jpg" alt="" fill sizes="(max-width: 1100px) 100vw, 1100px" priority className="-z-10 object-cover" />
           <div aria-hidden className="absolute inset-0 -z-10 bg-black/45" />
-          <HeroBubbles className="pointer-events-none absolute inset-0 -z-10 hidden h-full w-full md:block" />
 
           <div className="px-5 py-8 text-center md:px-16">
             <p className="text-[12px] font-bold text-white/95 md:text-[15px]">{label}</p>
