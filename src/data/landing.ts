@@ -653,6 +653,8 @@ export type Activity = {
   title: string;
   desc: string;
   date: string;
+  /** 확정 일정의 실제 날짜(KST, YYYY-MM-DD) — 첫 화면의 D-day·신청 인원 표시용. `date`는 표시 문구라 파싱하지 않는다. */
+  eventDate?: string;
   /** 구체적으로 확정된 다음 일정이 있을 때만 true — 카드에서 눈에 띄게 강조한다("항상 진행 중" 문구와는 대비 필요). */
   dateHighlight?: boolean;
   badge: string;
@@ -668,6 +670,7 @@ export const ACTIVITIES: Activity[] = [
     title: "외국인과 함께하는 하이킹",
     desc: "한국인과 외국인이 함께 걸으며 영어와 한국어를 나누는 아웃팅. 이번엔 수원 화성을 걸으며 정조대왕 이야기와 화성의 역사·문화를 재미있게 알아봐요.",
     date: "다음 일정: 10월 10일 · 수원 화성",
+    eventDate: "2026-10-10",
     dateHighlight: true,
     badge: "상시진행",
     badgeVariant: "open",
