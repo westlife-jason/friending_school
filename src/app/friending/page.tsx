@@ -166,7 +166,7 @@ export default async function FriendingPage({ searchParams }: { searchParams: Pr
           <div aria-hidden className="absolute inset-0 -z-10 bg-black/45" />
 
           <div className="px-5 py-8 text-center md:px-16">
-            <p className="text-[12px] font-bold text-white/95 md:text-[15px]">친구와 친구가 만나 배우는, 프렌딩 스쿨</p>
+            <p className="text-[14px] font-bold text-white md:text-[17px]">친구와 친구가 만나 배우는, 프렌딩 스쿨</p>
             <h1 className="mt-1.5 text-[22px] font-bold tracking-[-0.04em] text-white md:mt-2 md:text-[34px]">
               스피킹은, <span className="underline decoration-white/60 underline-offset-[6px]">말한 만큼</span> 늘어요
             </h1>

@@ -62,7 +62,7 @@ function TeacherCard({ teacher, onEntered }: { teacher: SmallTalkTeacher; onEnte
           <p className="text-muted-fg mt-0.5 text-sm">
             {nationalityLabel(teacher.nationality)} · {genderLabelKo(teacher.gender)}
           </p>
-          <span className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-[#22c55e]">
+          <span className="mt-1 inline-flex items-center gap-1 text-sm font-bold text-[#22c55e]">
             <span aria-hidden className="size-1.5 animate-pulse rounded-full bg-[#22c55e]" />
             지금 가능
           </span>

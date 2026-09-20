@@ -45,7 +45,7 @@ export default function ActivitySection({
                 <div className="absolute inset-0 bg-black/30" />
                 <span
                   className={cn(
-                    "absolute top-2.5 left-2.5 z-[1] rounded-full px-2.5 py-0.5 text-[11px] font-medium",
+                    "absolute top-2.5 left-2.5 z-[1] rounded-full px-2.5 py-0.5 text-xs font-semibold",
                     ACTIVITY_BADGE[a.badgeVariant],
                   )}>
                   {a.badge}
@@ -59,7 +59,7 @@ export default function ActivitySection({
                       완전히 사라지는 하드 블링크 대신 opacity가 100%↔50%로 오가는 pulse — 가독성 유지. */}
                   <span
                     className={cn(
-                      "flex items-center gap-1 text-sm",
+                      "flex items-center gap-1 text-[15px]",
                       a.dateHighlight ? "text-brand motion-safe:animate-pulse font-bold" : "text-muted-fg-faint",
                     )}>
                     <Calendar aria-hidden className="size-3.5" /> {a.date}
@@ -68,7 +68,7 @@ export default function ActivitySection({
                     <button
                       type="button"
                       onClick={() => setDetailTarget(a)}
-                      className="text-accent-blue-ink focus-visible:ring-accent-blue/50 inline-flex shrink-0 items-center gap-0.5 rounded text-xs font-bold transition-colors hover:underline focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
+                      className="text-accent-blue-ink focus-visible:ring-accent-blue/50 inline-flex shrink-0 items-center gap-0.5 rounded text-sm font-bold transition-colors hover:underline focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
                       세부정보 보기
                       <ChevronRight aria-hidden className="size-3" />
                     </button>

@@ -171,7 +171,7 @@ export default function Navbar({
         {!isHub && (
           <div className="hidden items-center justify-center gap-4 md:flex lg:gap-6">
             {NAV_TABS.map((tab) => (
-              <NavTabLink key={tab.href} href={tab.href} label={tab.label} active={isTabActive(pathname, tab.href)} className="text-sm" />
+              <NavTabLink key={tab.href} href={tab.href} label={tab.label} active={isTabActive(pathname, tab.href)} className="text-[15px]" />
             ))}
           </div>
         )}
@@ -286,7 +286,7 @@ export default function Navbar({
               스쿨 소개는 nav에서 완전히 제외(라우트 자체는 유지). 아코디언 아님 → 별도 state 없음 */}
           {NAV_TABS.map((tab) => (
             <li key={tab.href} className="border-rule border-b py-4">
-              <NavTabLink href={tab.href} label={tab.label} active={isTabActive(pathname, tab.href)} onClick={closeMenu} className="text-[15px]" />
+              <NavTabLink href={tab.href} label={tab.label} active={isTabActive(pathname, tab.href)} onClick={closeMenu} className="text-base" />
             </li>
           ))}
           {/* 커리큘럼 아코디언 */}

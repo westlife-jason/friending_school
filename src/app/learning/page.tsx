@@ -20,9 +20,9 @@ export default async function LearningPage() {
           <div aria-hidden className="absolute inset-0 -z-10 bg-black/45" />
 
           <div className="px-5 py-8 text-center md:px-16">
-            <p className="text-[12px] font-bold text-white/95 md:text-[15px]">예약 없이 바로 연결되는, 러닝</p>
+            <p className="text-[14px] font-bold text-white md:text-[17px]">예약 없이 바로 연결되는, 러닝</p>
             <h1 className="mt-1.5 text-[22px] font-bold tracking-[-0.04em] text-white md:mt-2 md:text-[34px]">선생님과 나누는 스몰톡</h1>
-            <p className="mt-2 text-sm text-white/80">
+            <p className="mt-2 text-[15px] text-white/95 md:text-base">
               지금 가능한 선생님 {teachers.length}명 <span className="text-white/50">· </span>예약 없이 곧장 Zoom에서 대화를 시작해요.
             </p>
           </div>

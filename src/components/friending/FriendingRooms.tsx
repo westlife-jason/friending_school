@@ -176,9 +176,9 @@ export default function FriendingRooms({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-ink flex items-center gap-2 text-base font-extrabold">
           무료 연습방
-          <span className="rounded-full bg-[#eafff1] px-2 py-0.5 text-[11px] font-extrabold text-[#22c55e]">FREE</span>
+          <span className="rounded-full bg-[#eafff1] px-2 py-0.5 text-xs font-extrabold text-[#22c55e]">FREE</span>
         </h2>
-        <p className="text-muted-fg flex items-center gap-1.5 text-[13px] font-bold">
+        <p className="text-muted-fg flex items-center gap-1.5 text-sm font-bold">
           <LiveDot active={liveCount > 0} />
           열린 방 {rooms.length}개
         </p>
@@ -384,16 +384,16 @@ function RoomCard({
 
         <p className="text-ink mt-1 line-clamp-1 text-sm font-semibold">{room.title}</p>
 
-        <p className="text-muted-fg mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px]">
+        <p className="text-muted-fg mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
           <span className="inline-flex items-center gap-1">
             <Users aria-hidden className="size-3" />
             {room.participants}/{room.capacity}명
           </span>
           <span>{when}</span>
-          <span className="bg-accent-blue-soft text-accent-blue-ink rounded-full px-2 py-0.5 text-[11px] font-bold">{levelLabel}</span>
-          {room.recurring && <span className="bg-surface text-muted-fg rounded-full px-2 py-0.5 text-[11px] font-bold">🔁 매주</span>}
+          <span className="bg-accent-blue-soft text-accent-blue-ink rounded-full px-2 py-0.5 text-xs font-bold">{levelLabel}</span>
+          {room.recurring && <span className="bg-surface text-muted-fg rounded-full px-2 py-0.5 text-xs font-bold">🔁 매주</span>}
           {room.accessType === "shouting_only" && (
-            <span className="bg-progress/10 text-progress rounded-full px-2 py-0.5 text-[11px] font-bold">🔊 샤우팅 수강생 전용</span>
+            <span className="bg-progress/10 text-progress rounded-full px-2 py-0.5 text-xs font-bold">🔊 샤우팅 수강생 전용</span>
           )}
         </p>
 
@@ -406,7 +406,7 @@ function RoomCard({
             title={description ? undefined : "등록된 소개가 없어요"}
             onClick={() => onOpenInfo(description)}
             className={cn(
-              "focus-visible:ring-accent-blue/50 inline-flex items-center gap-0.5 rounded text-xs font-bold transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+              "focus-visible:ring-accent-blue/50 inline-flex items-center gap-0.5 rounded text-sm font-bold transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
               description ? "text-accent-blue-ink hover:underline" : "text-muted-fg-faint/60 cursor-default",
             )}>
             <ChevronRight aria-hidden className="size-3" />방 소개글 보기
@@ -415,7 +415,7 @@ function RoomCard({
             type="button"
             aria-haspopup="dialog"
             onClick={onOpenBoard}
-            className="focus-visible:ring-accent-blue/50 text-accent-blue-ink inline-flex items-center gap-0.5 rounded text-xs font-bold transition-colors hover:underline focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
+            className="focus-visible:ring-accent-blue/50 text-accent-blue-ink inline-flex items-center gap-0.5 rounded text-sm font-bold transition-colors hover:underline focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
             <ChevronRight aria-hidden className="size-3" />게시판
           </button>
         </div>
@@ -446,7 +446,7 @@ function RoomCard({
                   type="button"
                   onClick={onLeave}
                   disabled={disabled}
-                  className="text-muted-fg hover:text-ink shrink-0 text-xs font-bold underline underline-offset-2 transition-colors disabled:opacity-60">
+                  className="text-muted-fg hover:text-ink shrink-0 text-sm font-bold underline underline-offset-2 transition-colors disabled:opacity-60">
                   예약 취소
                 </button>
               )}

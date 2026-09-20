@@ -119,10 +119,10 @@ export default function PrepEnrollBanner({
         <div aria-hidden className="absolute inset-0 -z-10 bg-black/45" />
 
         <div className="px-5 py-8 text-center md:px-16">
-          <p className="text-[12px] font-bold text-white/95 md:text-[15px]">매일 함께 외치는, 샤우팅</p>
+          <p className="text-[14px] font-bold text-white md:text-[17px]">매일 함께 외치는, 샤우팅</p>
           <h2 className="mt-1.5 text-[22px] font-bold tracking-[-0.04em] text-white md:mt-2 md:text-[34px]">소리 내어 말하면 입이 트여요</h2>
           {/* 회차 수는 알약 배지가 사라지며 이 줄로 옮겼다(레퍼런스 아이브로우는 카피 한 줄뿐이라). */}
-          <p className="mt-2 text-sm text-white/80">
+          <p className="mt-2 text-[15px] text-white/95 md:text-base">
             매월 {PREP_SESSION_COUNT}회<span className="text-white/50"> · </span>
             지금 신청할 수 있는 강좌 {courses.length}개{mine.length > 0 && <span className="font-bold text-white"> · 내 신청 {mine.length}건</span>}
           </p>
@@ -190,14 +190,15 @@ export default function PrepEnrollBanner({
                   <span className="text-ink text-[15px] font-bold break-words">{c.title}</span>
                   {/* 이미 시작한 강좌라는 사실을 금액보다 먼저 알린다 — 아래 '남은 N회'의 근거다. */}
                   {isOngoing(c) && (
-                    <span className="bg-surface text-muted-fg shrink-0 rounded-full px-2 py-0.5 text-xs font-bold">
+                    <span className="bg-surface text-muted-fg shrink-0 rounded-full px-2.5 py-0.5 text-[13px] font-bold">
                       진행 중 · 남은 {c.remainingCount}회
                     </span>
                   )}
                   {c.myStatus && (
                     // 마이페이지 배지와 같은 어휘·색(src/data/enrollment-status.ts) — 한 상태를
                     // 화면마다 다르게 부르지 않는다. '입금대기'는 여기서도 「결제 대기」.
-                    <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-xs font-bold", ENROLLMENT_STATUS_BADGE[BANNER_STATUS[c.myStatus]])}>
+                    <span
+                      className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-[13px] font-bold", ENROLLMENT_STATUS_BADGE[BANNER_STATUS[c.myStatus]])}>
                       {ENROLLMENT_STATUS_LABEL[BANNER_STATUS[c.myStatus]]}
                     </span>
                   )}
@@ -205,19 +206,19 @@ export default function PrepEnrollBanner({
 
                 {/* 소개는 2줄로 자른다 — 전문은 모달 「소개」 탭이 갖는다.
                     ⚠️ 소개가 없어도 자리를 비워 둬 카드마다 CTA 높이가 어긋나지 않게 한다. */}
-                <p className="text-muted-fg mt-1 line-clamp-2 min-h-[2.6em] text-[13px] leading-relaxed">{c.description?.trim() ?? ""}</p>
+                <p className="text-muted-fg mt-1 line-clamp-2 min-h-[2.6em] text-sm leading-relaxed">{c.description?.trim() ?? ""}</p>
 
                 {/* 난이도 pill은 빨강 계열(`brand`/`progress` 토큰)로 카드에서 가장 먼저 눈에 띄게 한다. */}
                 <div className="mt-2 flex flex-wrap gap-1.5">
-                  <span className="text-accent-blue-ink bg-accent-blue-soft/60 rounded-full px-2.5 py-0.5 text-[11.5px] font-bold">
+                  <span className="text-accent-blue-ink bg-accent-blue-soft/60 rounded-full px-2.5 py-0.5 text-[13px] font-bold">
                     매월 {PREP_SESSION_COUNT}회
                   </span>
-                  <span className="text-progress bg-brand/10 rounded-full px-2.5 py-0.5 text-[11.5px] font-bold">{roomLevelLabelKo(c.level)}</span>
+                  <span className="text-progress bg-brand/10 rounded-full px-2.5 py-0.5 text-[13px] font-bold">{roomLevelLabelKo(c.level)}</span>
                 </div>
 
                 {/* 비교 항목은 한 줄 요약 대신 dl 리스트 — 강좌가 여럿일 때 기간·시간·수업일·수강료가
                     카드마다 같은 자리에 와야 눈으로 훑을 수 있다(신청 현황은 비교에 쓰이지 않아 뺐다). */}
-                <dl className="mt-2.5 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[13px]">
+                <dl className="mt-2.5 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
                   <dt className="text-muted-fg-faint font-semibold">기간</dt>
                   <dd className="text-ink font-semibold break-words">{periodLabel(c)}</dd>
                   <dt className="text-muted-fg-faint font-semibold">시간</dt>
@@ -236,13 +237,13 @@ export default function PrepEnrollBanner({
                     type="button"
                     onClick={() => setDetailTarget(c)}
                     aria-haspopup="dialog"
-                    className="border-rule text-muted-fg hover:bg-surface hover:text-ink w-full rounded-full border py-2.5 text-[13px] font-bold transition-colors">
+                    className="border-rule text-muted-fg hover:bg-surface hover:text-ink w-full rounded-full border py-2.5 text-sm font-bold transition-colors">
                     세부정보 보기
                   </button>
                   {c.myStatus && (
                     <Link
                       href="/mypage/enrollments"
-                      className="text-accent-blue-ink shrink-0 text-[13px] font-bold underline underline-offset-2 hover:opacity-90">
+                      className="text-accent-blue-ink shrink-0 text-sm font-bold underline underline-offset-2 hover:opacity-90">
                       내 신청
                     </Link>
                   )}

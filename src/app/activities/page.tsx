@@ -21,14 +21,14 @@ export default function ActivitiesPage() {
           <div aria-hidden className="absolute inset-0 -z-10 bg-black/45" />
 
           <div className="px-5 py-8 text-center md:px-16">
-            <p className="text-[12px] font-bold text-white/95 md:text-[15px]">{label}</p>
+            <p className="text-[14px] font-bold text-white md:text-[17px]">{label}</p>
             <h1 className="mt-1.5 text-[22px] font-bold tracking-[-0.04em] text-white md:mt-2 md:text-[34px]">{title}</h1>
 
             <ul className="mt-4 flex list-none flex-wrap justify-center gap-2">
               {points.map((p) => (
                 <li
                   key={p}
-                  className="rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold text-white/90 backdrop-blur-[2px]">
+                  className="rounded-full border border-white/30 bg-white/15 px-3.5 py-1 text-sm font-semibold text-white backdrop-blur-[2px]">
                   {p}
                 </li>
               ))}
