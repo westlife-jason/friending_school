@@ -74,12 +74,14 @@ export default function Navbar({
   isTeacher = false,
   isFriender = false,
   isFrienderPlus = false,
+  isCenterManager = false,
 }: {
   user: NavbarUser;
   isAdmin?: boolean;
   isTeacher?: boolean;
   isFriender?: boolean;
   isFrienderPlus?: boolean;
+  isCenterManager?: boolean;
 }) {
   const pathname = usePathname();
   const isHub = pathname === "/";
@@ -209,7 +211,14 @@ export default function Navbar({
                     프렌더 pro
                   </Link>
                 )}
-                {!isTeacher && (
+                {isCenterManager && (
+                  <Link
+                    href="/center"
+                    className="text-cta hover:text-cta/80 focus-visible:ring-accent-blue/50 rounded text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
+                    Center Management
+                  </Link>
+                )}
+                {!isTeacher && !isCenterManager && (
                   <Link
                     href="/mypage"
                     className="text-ink-soft hover:text-accent-blue-ink focus-visible:ring-accent-blue/50 rounded text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
@@ -396,7 +405,17 @@ export default function Navbar({
                   </Link>
                 </li>
               )}
-              {!isTeacher && (
+              {isCenterManager && (
+                <li className="border-rule border-b py-4">
+                  <Link
+                    href="/center"
+                    onClick={closeMenu}
+                    className="text-cta focus-visible:ring-accent-blue/50 rounded text-[15px] font-semibold no-underline transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none">
+                    Center Management
+                  </Link>
+                </li>
+              )}
+              {!isTeacher && !isCenterManager && (
                 <li className="border-rule border-b py-4">
                   <Link
                     href="/mypage"

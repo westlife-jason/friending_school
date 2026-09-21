@@ -40,6 +40,12 @@ export default async function RootLayout({
   // Navbar 라벨 분기용 — "프렌더"/"프렌더 pro"를 서로 배타적으로 노출(둘 다 role 단일값이라 겹치지 않게 분리).
   const frienderPlus = isFrienderPlusRole(role);
   const friender = isFrienderRole(role) && !frienderPlus;
+  // 센터 매니저 여부 — centers.manager_id에 본인이 지정됐는지(공개 select라 세션 클라로 조회 가능).
+  let centerManager = false;
+  if (user) {
+    const { count } = await supabase.from("centers").select("id", { count: "exact", head: true }).eq("manager_id", user.id);
+    centerManager = (count ?? 0) > 0;
+  }
 
   return (
     <html lang="ko" data-scroll-behavior="smooth" className={cn("font-sans", geist.variable)}>
@@ -50,6 +56,7 @@ export default async function RootLayout({
           isTeacher={teacher}
           isFriender={friender}
           isFrienderPlus={frienderPlus}
+          isCenterManager={centerManager}
         />
         <AuthHashHandler />
         {children}
