@@ -84,11 +84,13 @@ export default function ClassWeekGrid({
   now,
   readOnly = false,
   onReassign,
+  onPostpone,
 }: {
   sessions: AdminSession[];
   now: number;
   readOnly?: boolean;
   onReassign?: (s: AdminSession) => void;
+  onPostpone?: (s: AdminSession) => void;
 }) {
   const en = useLang() === "en";
   const [weekStart, setWeekStart] = useState<Date>(() => mondayOf(new Date(now)));
@@ -253,7 +255,7 @@ export default function ClassWeekGrid({
         </div>
       </div>
 
-      {slot && <SlotModal slot={slot} now={now} readOnly={readOnly} onReassign={onReassign} onClose={() => setSlot(null)} />}
+      {slot && <SlotModal slot={slot} now={now} readOnly={readOnly} onReassign={onReassign} onPostpone={onPostpone} onClose={() => setSlot(null)} />}
     </div>
   );
 }
@@ -269,12 +271,14 @@ function SlotModal({
   onClose,
   readOnly = false,
   onReassign,
+  onPostpone,
 }: {
   slot: SlotSel;
   now: number;
   onClose: () => void;
   readOnly?: boolean;
   onReassign?: (s: AdminSession) => void;
+  onPostpone?: (s: AdminSession) => void;
 }) {
   const router = useRouter();
   const en = useLang() === "en";
@@ -366,12 +370,13 @@ function SlotModal({
               </>
             );
             const canReassign = !!onReassign && now < kstDateMinToMs(s.sessionDate, s.startMin);
+            const canPostpone = !!onPostpone && now < kstDateMinToMs(s.sessionDate, s.startMin);
             return (
               <li key={idx}>
                 {readOnly ? (
                   <div className="flex w-full items-start justify-between gap-3 px-6 py-3.5 text-left">
                     <div className="flex min-w-0 flex-col gap-1">{inner}</div>
-                    {(s.feedback || canReassign) && (
+                    {(s.feedback || canReassign || canPostpone) && (
                       <div className="flex shrink-0 flex-col gap-1.5 self-center">
                         {s.feedback && (
                           <button
@@ -390,6 +395,17 @@ function SlotModal({
                             }}
                             className="border-cta text-cta hover:bg-cta/5 inline-flex items-center justify-center rounded-md border px-3 py-1.5 text-xs font-bold transition-colors">
                             {en ? "Reassign" : "강사 대체"}
+                          </button>
+                        )}
+                        {canPostpone && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onPostpone!(s);
+                              onClose();
+                            }}
+                            className="border-brand/50 text-brand hover:bg-brand/5 inline-flex items-center justify-center rounded-md border px-3 py-1.5 text-xs font-bold transition-colors">
+                            {en ? "Postpone" : "연기"}
                           </button>
                         )}
                       </div>

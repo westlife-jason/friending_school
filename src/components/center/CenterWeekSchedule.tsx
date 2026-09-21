@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import ClassWeekGrid, { type AdminSession } from "@/components/admin/ClassWeekGrid";
 import ReassignModal, { type CenterTeacher, type CenterClass } from "@/components/center/ReassignModal";
+import PostponeModal from "@/components/center/PostponeModal";
 
 // AdminSession(회차) → 대체 피커용 CenterClass.
 function toCenterClass(s: AdminSession): CenterClass {
@@ -23,6 +24,7 @@ function toCenterClass(s: AdminSession): CenterClass {
 export default function CenterWeekSchedule({ sessions, teachers }: { sessions: AdminSession[]; teachers: CenterTeacher[] }) {
   const [now, setNow] = useState(() => Date.now());
   const [reassignTarget, setReassignTarget] = useState<CenterClass | null>(null);
+  const [postponeTarget, setPostponeTarget] = useState<CenterClass | null>(null);
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 60_000);
     return () => clearInterval(t);
@@ -34,10 +36,17 @@ export default function CenterWeekSchedule({ sessions, teachers }: { sessions: A
       {sessions.length === 0 ? (
         <p className="text-muted-fg-faint py-10 text-center text-sm">No classes to show.</p>
       ) : (
-        <ClassWeekGrid sessions={sessions} now={now} readOnly onReassign={(s) => setReassignTarget(toCenterClass(s))} />
+        <ClassWeekGrid
+          sessions={sessions}
+          now={now}
+          readOnly
+          onReassign={(s) => setReassignTarget(toCenterClass(s))}
+          onPostpone={(s) => setPostponeTarget(toCenterClass(s))}
+        />
       )}
 
       {reassignTarget && <ReassignModal cls={reassignTarget} teachers={teachers} onClose={() => setReassignTarget(null)} />}
+      {postponeTarget && <PostponeModal cls={postponeTarget} onClose={() => setPostponeTarget(null)} />}
     </div>
   );
 }

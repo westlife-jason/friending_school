@@ -3,6 +3,8 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { requireCenterManager } from "@/lib/center-manager";
+import { countPendingRequests } from "@/lib/center-requests";
+import { createAdminClient } from "@/utils/supabase/admin";
 import CenterTabs from "@/components/center/CenterTabs";
 import { LangProvider } from "@/components/LangProvider";
 
@@ -22,6 +24,8 @@ export default async function CenterLayout({ children }: { children: React.React
     ? [profile.first_name, profile.last_name].filter(Boolean).join(" ") || user?.email?.split("@")[0]
     : user?.email?.split("@")[0];
 
+  const pendingCount = await countPendingRequests(createAdminClient(), mgr.centerIds);
+
   return (
     <div className="bg-surface min-h-screen">
       <div className="px-5 py-7 text-center">
@@ -33,11 +37,12 @@ export default async function CenterLayout({ children }: { children: React.React
           <p className="text-xs font-bold tracking-[0.1em] opacity-90">FRIENDING SCHOOL · CENTER MANAGER</p>
           <p className="mt-2 text-xl font-bold md:text-2xl">Welcome, {displayName}! 👋</p>
           <p className="mt-1 text-sm opacity-90">
-            View your center&apos;s teachers and reassign a session&apos;s teacher when a class can&apos;t be held.
+            Keep your teachers&apos; availability up to date, approve enrollment requests, and reassign a session&apos;s teacher when a class
+            can&apos;t be held.
           </p>
         </div>
 
-        <CenterTabs />
+        <CenterTabs pendingCount={pendingCount} />
 
         <LangProvider lang="en">{children}</LangProvider>
       </div>
