@@ -5,6 +5,8 @@ import Image from "next/image";
 import { Loader2, Printer, X } from "lucide-react";
 import { toast } from "sonner";
 import AvailabilityGrid from "@/components/teacher/AvailabilityGrid";
+import { DAY_LABELS, DISPLAY_DAYS, fmtTime } from "@/lib/availability";
+import { slotsToDayRanges } from "@/lib/availability-ranges";
 import { openTimetablePrint } from "@/lib/timetable-print";
 import RateHistoryEditor from "@/components/admin/RateHistoryEditor";
 import { updateTeacherCenter } from "@/app/admin/actions";
@@ -232,7 +234,13 @@ export default function TeacherInfoModal({
                 {en ? "Export PDF" : "PDF로 내보내기"}
               </button>
             </div>
-            <AvailabilityGrid initialSlots={teacher.slots} bookedSlots={teacher.bookedSlots} readOnly />
+            {readOnly ? (
+              // 센터 매니저(폰) — AvailabilityGrid(520px 고정 그리드)는 좁은 화면에서 모달 전체가
+              // 가로로 끌려다니는 원인이라, 요일별 텍스트 목록으로 대신 보여준다(실제 사용자 피드백).
+              <TeacherAvailabilitySummary slots={teacher.slots} en={en} />
+            ) : (
+              <AvailabilityGrid initialSlots={teacher.slots} bookedSlots={teacher.bookedSlots} readOnly />
+            )}
           </div>
         </div>
 
@@ -246,5 +254,22 @@ export default function TeacherInfoModal({
         </div>
       </div>
     </>
+  );
+}
+
+// 요일별 가능 시간 텍스트 목록 — 폰에서도 고정 너비 그리드 없이 스크롤 걱정 없이 보이도록.
+function TeacherAvailabilitySummary({ slots, en }: { slots: { day: number; min: number }[]; en: boolean }) {
+  const byDay = slotsToDayRanges(slots);
+  const days = DISPLAY_DAYS.filter((d) => byDay[d].length > 0);
+  if (days.length === 0) return <p className="text-muted-fg-faint text-sm">{en ? "Not set" : "설정된 시간이 없어요"}</p>;
+  return (
+    <ul className="border-rule divide-rule divide-y rounded-lg border text-sm">
+      {days.map((d) => (
+        <li key={d} className="flex gap-3 px-3 py-2">
+          <span className="text-muted-fg-faint w-9 shrink-0 font-semibold">{DAY_LABELS[DISPLAY_DAYS.indexOf(d)]}</span>
+          <span className="text-ink">{byDay[d].map((r) => `${fmtTime(r.start)}–${fmtTime(r.end)}`).join(", ")}</span>
+        </li>
+      ))}
+    </ul>
   );
 }

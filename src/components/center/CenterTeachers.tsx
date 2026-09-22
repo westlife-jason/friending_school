@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import CurrentTeacherTable from "@/components/admin/CurrentTeacherTable";
+import CenterTeacherList from "@/components/center/CenterTeacherList";
 import TeacherInfoModal from "@/components/admin/TeacherInfoModal";
 import TeacherClassesModal from "@/components/admin/TeacherClassesModal";
 import type { CurrentTeacher } from "@/components/admin/TeacherRequestsManager";
@@ -20,7 +20,7 @@ export default function CenterTeachers({ teachers, centers }: { teachers: Curren
       {teachers.length === 0 ? (
         <p className="text-muted-fg-faint py-10 text-center text-sm">No teachers are registered at your center.</p>
       ) : (
-        <CurrentTeacherTable teachers={teachers} onView={setInfoTarget} onViewClasses={setClassesTarget} />
+        <CenterTeacherList teachers={teachers} onView={setInfoTarget} onViewClasses={setClassesTarget} />
       )}
 
       <TeacherInfoModal teacher={infoTarget} centers={centerOpts} rows={[]} rates={{}} readOnly onClose={() => setInfoTarget(null)} />
