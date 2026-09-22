@@ -1,8 +1,11 @@
 import "server-only";
 
-import { createAdminClient } from "@/utils/supabase/admin";
+import { headers } from "next/headers";
+import { createAdminClient, getAdminEmails } from "@/utils/supabase/admin";
 import { sendSms } from "@/lib/sms";
-import { sendClassCancellationToTeacher } from "@/lib/mailer";
+import { sendClassCancellationToTeacher, sendClassPostponedByManagerToAdmin } from "@/lib/mailer";
+import { getOrigin } from "@/lib/origin";
+import { getCourse } from "@/data/courses";
 import { fmtTime, lessonEndMin } from "@/lib/availability";
 import { kstDateMinToMs } from "@/lib/classtime";
 import { createMakeupClass, type ClassForMakeup } from "@/lib/makeup";
@@ -15,8 +18,8 @@ type Admin = ReturnType<typeof createAdminClient>;
 // 있어 다시 요청해야 했다. 관리자 연기(admin/actions.ts adminCancelClass)의 reason='company'와 같은 규칙으로 처리한다 —
 // 학생의 연기 횟수는 차감하지 않고(회사 사유), 과정 마지막 수업 다음에 보강 1회를 자동 생성한다.
 // ⚠️ 원본 수정 권한이 생기면 adminCancelClass와 하나의 공유 코어로 합칠 것.
-//    관리자 메일은 보내지 않는다 — 기존 템플릿(sendClassPostponedToAdmin)이 "학생이 연기했다"는 문구라 맞지 않는다.
-//    대신 이벤트 로그(actor_role=center_manager)로 남고 관리자 화면 타임라인에서 볼 수 있다.
+//    관리자에게는 별도 메일 템플릿(sendClassPostponedByManagerToAdmin)을 보낸다 — 학생 연기용 템플릿
+//    (sendClassPostponedToAdmin)은 "학생이 연기했다"고 못 박은 문구라 그대로 쓰면 사실과 다르다.
 
 const CLASS_SELECT =
   "id, enrollment_id, student_id, teacher_id, course, course_title, course_english_title, teacher_name, student_name, student_english_name, session_no, session_date, start_min, end_min, status, is_makeup, conducted_at, conducted_override";
@@ -67,6 +70,10 @@ export async function postponeClassAsCenterManager(
   const makeupDate = await createMakeupClass(admin, cls);
   const sessionTime = `${fmtTime(cls.start_min)}~${fmtTime(lessonEndMin(cls.end_min))}`;
 
+  const { data: actor } = await admin.from("profiles").select("first_name, last_name").eq("id", input.actorId).maybeSingle();
+  const a = actor as { first_name?: string | null; last_name?: string | null } | null;
+  const managerName = [a?.first_name, a?.last_name].filter(Boolean).join(" ").trim() || undefined;
+
   // 학생 SMS(best-effort) — 강사 대체와 같은 방식. 보강 날짜가 정해졌으면 함께 알린다.
   try {
     const { data: enr } = await admin.from("enrollments").select("student_phone").eq("id", cls.enrollment_id).maybeSingle();
@@ -100,14 +107,33 @@ export async function postponeClassAsCenterManager(
     console.error("[postponeClassAsCenterManager] 강사 알림 발송 실패:", err);
   }
 
-  const { data: actor } = await admin.from("profiles").select("first_name, last_name").eq("id", input.actorId).maybeSingle();
-  const a = actor as { first_name?: string | null; last_name?: string | null } | null;
+  // 관리자 알림 메일(best-effort) — 관리자 본인이 처리하는 회사 사유 연기와 달리, 이건 센터 매니저가
+  // 처리하는 일이라 관리자가 실시간으로 알지 못한다. 프렌딩 스쿨 매니저 요청으로 추가.
+  try {
+    const origin = getOrigin(await headers());
+    await sendClassPostponedByManagerToAdmin(await getAdminEmails(), {
+      studentName: cls.student_name ?? "",
+      studentEnglishName: cls.student_english_name ?? undefined,
+      courseTitle: cls.course_title,
+      courseEnglishTitle: getCourse(cls.course)?.englishTitle ?? cls.course_english_title ?? undefined,
+      teacherName: cls.teacher_name ?? "",
+      managerName,
+      sessionDate: cls.session_date,
+      sessionTime,
+      sessionNo: cls.session_no,
+      makeupDate,
+      adminUrl: `${origin}/admin/classes`,
+    });
+  } catch (err) {
+    console.error("[postponeClassAsCenterManager] 관리자 알림 발송 실패:", err);
+  }
+
   await logEnrollmentEvent(admin, {
     enrollmentId: cls.enrollment_id,
     classId: cls.id,
     eventType: "class_postponed",
     actorId: input.actorId,
-    actorName: [a?.first_name, a?.last_name].filter(Boolean).join(" ").trim() || undefined,
+    actorName: managerName,
     actorRole: "center_manager",
     course: cls.course,
     courseTitle: cls.course_title,

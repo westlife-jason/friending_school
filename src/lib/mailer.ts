@@ -1178,6 +1178,56 @@ export async function sendClassPostponedToAdmin(to: string[], data: ClassPostpon
   await sendResultEmail(to, `[Class postponed] ${courseLabel} · ${studentLabel}`, html, text);
 }
 
+/* ===== 관리자 대상 개별 수업 연기 알림(센터 매니저 처리 — 강사 사정) ===== */
+// ClassPostponeAdminEmailData 재사용 — 항목 구성은 학생 연기 알림과 동일, 문구만 "누가 왜 연기했는지"에 맞게 다르다.
+
+export type ClassPostponeByManagerAdminEmailData = ClassPostponeAdminEmailData & {
+  managerName?: string; // 처리한 센터 매니저 표시 이름
+};
+
+/**
+ * 관리자에게 센터 매니저가 처리한 "강사 사정" 개별 수업 연기 알림. best-effort — 호출 측에서 try/catch로 감쌀 것.
+ * ⚠️ sendClassPostponedToAdmin과 별도 함수인 이유: 그 템플릿은 "학생이 연기했다"고 못 박은 문구라
+ *    강사 사정·센터 매니저 처리 건에 그대로 쓰면 사실과 다르다.
+ */
+export async function sendClassPostponedByManagerToAdmin(to: string[], data: ClassPostponeByManagerAdminEmailData): Promise<void> {
+  const studentLabel = data.studentEnglishName ? `${data.studentName} (${data.studentEnglishName})` : data.studentName;
+  const courseLabel = data.courseEnglishTitle ? `${data.courseTitle} (${data.courseEnglishTitle})` : data.courseTitle;
+  const rows: [string, string][] = [
+    ["Student", studentLabel || "-"],
+    ["Course", courseLabel],
+    ["Teacher", data.teacherName || "-"],
+    ["Postponed by", data.managerName ? `${data.managerName} (center manager)` : "Center manager"],
+    ["Postponed session", `${data.sessionDate} ${data.sessionTime}${data.sessionNo ? ` (#${data.sessionNo})` : ""}`],
+    ["Makeup scheduled", data.makeupDate ? `${data.makeupDate} ${data.sessionTime}` : "Not created — manual action required"],
+  ];
+  const html = `<div style="font-family:'Apple SD Gothic Neo',Arial,sans-serif;max-width:560px;margin:0 auto">
+    <h2 style="font-size:18px;color:#1a1a1a;margin:0 0 4px">A class was postponed (teacher unavailable)</h2>
+    <p style="font-size:14px;color:#666;margin:0 0 16px">${escapeHtml(courseLabel)} · ${escapeHtml(studentLabel)}</p>
+    <table style="width:100%;border-collapse:collapse;font-size:14px;border:1px solid #eee;border-radius:8px;overflow:hidden">${reassignTableRows(rows)}</table>
+    <p style="font-size:14px;color:#333;line-height:1.6;margin:16px 0 12px">${
+      data.makeupDate
+        ? "A makeup session has been added automatically at the end of the course. You can review it on the admin page."
+        : "The makeup session could not be created automatically. Please add it manually on the admin page."
+    } This does not count against the student's postponement limit.</p>
+    <a href="${escapeHtml(data.adminUrl)}" style="display:inline-block;background:#1a4fa0;color:#fff;text-decoration:none;font-size:14px;font-weight:bold;padding:10px 20px;border-radius:8px">Go to class management</a>
+    <p style="font-size:12px;color:#999;margin:20px 0 0">Friending School admin notification</p>
+  </div>`;
+  const text = [
+    "A class was postponed (teacher unavailable).",
+    "",
+    `Student: ${studentLabel || "-"}`,
+    `Course: ${courseLabel}`,
+    `Teacher: ${data.teacherName || "-"}`,
+    `Postponed by: ${data.managerName ? `${data.managerName} (center manager)` : "Center manager"}`,
+    `Postponed session: ${data.sessionDate} ${data.sessionTime}${data.sessionNo ? ` (#${data.sessionNo})` : ""}`,
+    `Makeup scheduled: ${data.makeupDate ? `${data.makeupDate} ${data.sessionTime}` : "Not created — manual action required"}`,
+    "",
+    `Class management: ${data.adminUrl}`,
+  ].join("\n");
+  await sendResultEmail(to, `[Class postponed] ${courseLabel} · ${studentLabel}`, html, text);
+}
+
 /* ===== 센터 매니저 대상 수강신청 라이프사이클 알림 ===== */
 
 // 소속 강사의 수강신청이 접수/승인/거절/확정/취소/환불될 때 담당 센터 매니저에게 알린다.
