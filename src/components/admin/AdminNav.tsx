@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const ITEMS: { href: string; label: string }[] = [
+  { href: "/admin/dashboard", label: "🧭 대시보드" },
   { href: "/admin/enrollments", label: "📚 수강신청" },
   { href: "/admin/classes", label: "📹 화상수업" },
   { href: "/admin/members", label: "👥 회원 관리" },

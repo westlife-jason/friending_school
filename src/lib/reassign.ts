@@ -215,7 +215,7 @@ export async function reassignClassCore(
   revalidatePath(`/admin/classes/${cls.enrollment_id}`);
   revalidatePath("/teacher", "layout");
   revalidatePath("/mypage", "layout");
-  revalidatePath("/center");
+  revalidatePath("/center", "layout"); // 대시보드(/center)의 "오늘 수업" 목록도 함께 갱신
   revalidatePath("/admin/teacher-requests"); // 「수업 보기」 모달의 대체 회차 목록 최신화
   return { ok: true };
 }
