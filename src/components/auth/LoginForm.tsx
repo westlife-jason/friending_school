@@ -21,7 +21,7 @@ import { Label } from "@/components/ui/label";
 import { KakaoButton } from "@/components/auth/KakaoButton";
 import { useCapsLockWarning } from "@/hooks/use-caps-lock";
 
-export default function LoginForm({ next = "/" }: { next?: string }) {
+export default function LoginForm({ next = "/", variant = "default" }: { next?: string; variant?: "default" | "center" }) {
   const [state, formAction, pending] = useActionState<LoginState, FormData>(login, null);
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -64,8 +64,10 @@ export default function LoginForm({ next = "/" }: { next?: string }) {
   return (
     <Card className="mx-auto w-full max-w-md">
       <CardHeader className="pb-2">
-        <CardTitle className="text-2xl font-extrabold">로그인</CardTitle>
-        <CardDescription>이메일과 비밀번호로 로그인하세요</CardDescription>
+        <CardTitle className="text-2xl font-extrabold">{variant === "center" ? "센터 관리자 로그인" : "로그인"}</CardTitle>
+        <CardDescription>
+          {variant === "center" ? "센터 매니저 계정의 이메일과 비밀번호를 입력하세요" : "이메일과 비밀번호로 로그인하세요"}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form action={formAction} className="flex flex-col gap-4">
@@ -171,20 +173,24 @@ export default function LoginForm({ next = "/" }: { next?: string }) {
             {pending ? "로그인 중" : "로그인"}
           </Button>
 
-          <div className="text-muted-fg my-1 flex items-center gap-3 text-xs">
-            <div className="bg-rule h-px flex-1" />
-            <span>또는</span>
-            <div className="bg-rule h-px flex-1" />
-          </div>
+          {variant === "default" && (
+            <>
+              <div className="text-muted-fg my-1 flex items-center gap-3 text-xs">
+                <div className="bg-rule h-px flex-1" />
+                <span>또는</span>
+                <div className="bg-rule h-px flex-1" />
+              </div>
 
-          <KakaoButton next={next} />
+              <KakaoButton next={next} />
 
-          <p className="text-muted-foreground mt-2 text-center text-sm">
-            계정이 없으신가요?{" "}
-            <Link href="/signup" className="font-semibold text-[#ff4757] hover:underline">
-              회원가입
-            </Link>
-          </p>
+              <p className="text-muted-foreground mt-2 text-center text-sm">
+                계정이 없으신가요?{" "}
+                <Link href="/signup" className="font-semibold text-[#ff4757] hover:underline">
+                  회원가입
+                </Link>
+              </p>
+            </>
+          )}
         </form>
       </CardContent>
     </Card>

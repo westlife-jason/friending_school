@@ -157,6 +157,10 @@ export default function Navbar({
     prevMenuOpen.current = menuOpen;
   }, [menuOpen]);
 
+  // 센터 매니저 전용 로그인 화면 — 소비자용 헤더를 보이면 "학생 사이트로 들어가는 느낌"이라는
+  // 피드백(민수)이 있어 이 경로에서만 숨긴다. 다른 라우트는 그대로. 훅 호출 이후에만 분기한다.
+  if (pathname === "/center/login") return null;
+
   return (
     <>
       {/* 네비 */}

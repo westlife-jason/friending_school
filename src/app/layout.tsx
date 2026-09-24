@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ChromeGate from "@/components/ChromeGate";
 import AuthHashHandler from "@/components/auth/AuthHashHandler";
 import { Toaster } from "@/components/ui/sonner";
 import { Geist } from "next/font/google";
@@ -60,7 +61,9 @@ export default async function RootLayout({
         />
         <AuthHashHandler />
         {children}
-        <Footer />
+        <ChromeGate hideOn={["/center/login"]}>
+          <Footer />
+        </ChromeGate>
         <Toaster />
       </body>
     </html>
